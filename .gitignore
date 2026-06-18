@@ -1,0 +1,15 @@
+venv/
+.venv/
+
+__pycache__/
+*.pyc
+
+.env
+
+data/embeddings/
+data/reports/
+
+.vscode/
+
+*.db
+*.sqlite3
