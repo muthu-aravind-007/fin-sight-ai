@@ -1,10 +1,10 @@
-venv/
-.venv/
-
 __pycache__/
 *.pyc
 
-.vscode/
+.venv/
+venv/
 
-*.db
-*.sqlite3
+chroma_db/
+data/uploads/
+
+.pytest_cache/
