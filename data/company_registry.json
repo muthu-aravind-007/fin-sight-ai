@@ -1,0 +1,16 @@
+[
+    {
+        "ticker": "MSFT",
+        "aliases": [
+            "microsoft",
+            "msft"
+        ]
+    },
+    {
+        "ticker": "NVDA",
+        "aliases": [
+            "nvidia",
+            "nvda"
+        ]
+    }
+]

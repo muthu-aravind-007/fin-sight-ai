@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+streamlit
+langchain
+chromadb
+sentence-transformers
+ollama
+yfinance
+pandas
+...

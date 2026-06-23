@@ -3,5 +3,5 @@ from langchain_huggingface import (
 )
 
 embedding_model = HuggingFaceEmbeddings(
-    model_name="all-MiniLM-L6-v2"
+    model_name="BAAI/bge-base-en-v1.5"
 )

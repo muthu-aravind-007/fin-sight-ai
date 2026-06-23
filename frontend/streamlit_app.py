@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import yfinance as yf
 import pandas as pd
+import os
 
 st.set_page_config(
     page_title="FinSight AI",
@@ -15,12 +16,14 @@ st.caption(
 
 st.markdown("---")
 
-tab1, tab2, tab3, tab4 = st.tabs(
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
     [
         "📈 Company Analysis",
         "⚔️ Company Comparison",
         "📄 Earnings Analyzer",
-        "📊 Portfolio Analyzer"
+        "📊 Portfolio Analyzer",
+        "🤖 Earnings Q&A",
+        "📚 Multi-RAG Analyzer"
     ]
 )
 
@@ -355,3 +358,330 @@ with tab4:
             st.markdown(
                 result["analysis"]
             )
+
+with tab5:
+
+    st.header(
+        "🤖 Earnings Q&A (RAG)"
+    )
+
+    st.caption(
+        "Upload an earnings transcript PDF and ask questions."
+    )
+
+    st.info("""
+    💡 Suggested Questions
+
+    • What are the key risks?
+    • What drove revenue growth?
+    • What did management say about AI demand?
+    • What is the future outlook?
+    • What are the biggest opportunities?
+    """)
+
+    uploaded_file = st.file_uploader(
+        "Upload Earnings Transcript PDF",
+        type=["pdf"]
+    )
+
+    if st.button(
+        "📄 Summarize Transcript",
+        key="summary_button"
+    ):
+
+        if uploaded_file is None:
+
+            st.error(
+                "Please upload a PDF first."
+            )
+
+        else:
+
+            with st.spinner(
+                "Generating transcript summary..."
+            ):
+
+                os.makedirs(
+                    "data/uploads",
+                    exist_ok=True
+                )
+
+                pdf_path = (
+                    f"data/uploads/{uploaded_file.name}"
+                )
+
+                with open(
+                    pdf_path,
+                    "wb"
+                ) as f:
+
+                    f.write(
+                        uploaded_file.getbuffer()
+                    )
+
+                response = requests.post(
+                    "http://127.0.0.1:8000/transcript-summary",
+                    json={
+                        "pdf_path": pdf_path
+                    }
+                )
+
+                result = response.json()
+
+                st.subheader(
+                    "📄 Transcript Summary"
+                )
+
+                st.markdown(
+                    result["summary"]
+                )
+
+    question = st.text_input(
+        "Ask a question",
+        placeholder="What did management say about AI demand?"
+    )
+
+    if st.button(
+        "Ask Question",
+        key="rag_question_button"
+    ):
+
+        if uploaded_file is None:
+
+            st.error(
+                "Please upload a PDF first."
+            )
+
+        elif not question:
+
+            st.error(
+                "Please enter a question."
+            )
+
+        else:
+
+            with st.spinner(
+                "Analyzing transcript..."
+            ):
+
+                os.makedirs(
+                    "data/uploads",
+                    exist_ok=True
+                )
+
+                pdf_path = (
+                    f"data/uploads/{uploaded_file.name}"
+                )
+
+                with open(
+                    pdf_path,
+                    "wb"
+                ) as f:
+
+                    f.write(
+                        uploaded_file.getbuffer()
+                    )
+
+                response = requests.post(
+                    "http://127.0.0.1:8000/earnings-rag",
+                    json={
+                        "pdf_path": pdf_path,
+                        "question": question
+                    }
+                )
+
+                result = response.json()
+
+                st.subheader(
+                    "❓ Question"
+                )
+
+                st.info(
+                    result["question"]
+                )
+
+                st.subheader(
+                    "🤖 Answer"
+                )
+
+                st.markdown(
+                    result["answer"]
+                )
+
+                st.subheader(
+                    "📚 Sources"
+                )
+
+                for page in result["source_pages"]:
+
+                    st.info(
+                        f"Page {page}"
+                    )
+
+                with st.expander(
+                    "📄 Retrieved Context"
+                ):
+
+                    st.text(
+                        result["context"]
+                    )
+
+with tab6:
+
+    st.header(
+        "📚 Multi-Transcript Analyzer"
+    )
+
+    st.caption(
+        "Upload multiple earnings transcripts and ask cross-company questions."
+    )
+
+    uploaded_files = st.file_uploader(
+        "Upload Multiple Earnings PDFs",
+        type=["pdf"],
+        accept_multiple_files=True
+    )
+
+    documents = []
+
+    if uploaded_files:
+
+        st.subheader(
+            "Transcript Metadata"
+        )
+
+        for idx, file in enumerate(
+            uploaded_files
+        ):
+
+            st.markdown(
+                f"### {file.name}"
+            )
+
+            col1, col2 = st.columns(2)
+
+            company = col1.text_input(
+                "Company Ticker",
+                key=f"company_{idx}",
+                placeholder="MSFT"
+            )
+
+            quarter = col2.text_input(
+                "Quarter",
+                key=f"quarter_{idx}",
+                placeholder="Q3 2026"
+            )
+
+            documents.append(
+                {
+                    "file": file,
+                    "company": company.upper(),
+                    "quarter": quarter.upper()
+                }
+            )
+
+    question = st.text_input(
+        "Ask a cross-company question",
+        placeholder="Compare AI strategy between NVIDIA and Microsoft"
+    )
+
+    if st.button(
+        "Analyze Multiple Transcripts",
+        key="multi_rag_button"
+    ):
+
+        if not uploaded_files:
+
+            st.error(
+                "Upload at least one PDF."
+            )
+
+        elif not question:
+
+            st.error(
+                "Enter a question."
+            )
+
+        elif any(
+            not doc["company"]
+            or not doc["quarter"]
+            for doc in documents
+        ):
+
+            st.error(
+                "Please provide Company and Quarter for all transcripts."
+            )
+
+        else:
+
+            with st.spinner(
+                "Analyzing transcripts..."
+            ):
+
+                os.makedirs(
+                    "data/uploads",
+                    exist_ok=True
+                )
+
+                documents_payload = []
+
+                for doc in documents:
+
+                    pdf_path = (
+                        f"data/uploads/{doc['file'].name}"
+                    )
+
+                    with open(
+                        pdf_path,
+                        "wb"
+                    ) as f:
+
+                        f.write(
+                            doc["file"].getbuffer()
+                        )
+
+                    documents_payload.append(
+                        {
+                            "pdf_path": pdf_path,
+                            "company": doc["company"],
+                            "quarter": doc["quarter"]
+                        }
+                    )
+
+                response = requests.post(
+                    "http://127.0.0.1:8000/multi-rag",
+                    json={
+                        "documents": documents_payload,
+                        "question": question
+                    }
+                )
+
+                result = response.json()
+
+                st.subheader(
+                    "🤖 AI Analysis"
+                )
+
+                st.markdown(
+                    result["answer"]
+                )
+
+                with st.expander(
+                    "📚 Retrieved Sources"
+                ):
+
+                    sources_df = pd.DataFrame(
+                        result["sources"]
+                    )
+
+                    sources_df.columns = [
+                        "Company",
+                        "Quarter",
+                        "Page"
+                    ]
+
+                    st.dataframe(
+                        sources_df,
+                        use_container_width=True,
+                        hide_index=True
+                    )

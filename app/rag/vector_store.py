@@ -6,11 +6,14 @@ from app.rag.embeddings import (
 
 
 def create_vector_store(
-    documents
+    documents,
+    persist_directory
 ):
 
-    return Chroma.from_documents(
-        documents,
-        embedding_model,
-        persist_directory="chroma_db"
+    db = Chroma.from_documents(
+        documents=documents,
+        embedding=embedding_model,
+        persist_directory=persist_directory
     )
+
+    return db
