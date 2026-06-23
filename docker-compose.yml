@@ -10,6 +10,9 @@ services:
     ports:
       - "8000:8000"
 
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+
   frontend:
     build:
       context: .

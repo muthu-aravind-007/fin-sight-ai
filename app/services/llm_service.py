@@ -1,16 +1,25 @@
+import os
 import ollama
+
+client = ollama.Client(
+    host=os.getenv(
+        "OLLAMA_HOST",
+        "http://localhost:11434"
+    )
+)
 
 def generate_analysis(
     prompt,
     comparison_mode=False
 ):
 
-    if comparison_mode:
-        num_predict = 650
-    else:
-        num_predict = 700
+    num_predict = (
+        650
+        if comparison_mode
+        else 700
+    )
 
-    response = ollama.chat(
+    response = client.chat(
         model="qwen2.5:7b",
         messages=[
             {
