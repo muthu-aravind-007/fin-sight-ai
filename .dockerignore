@@ -1,9 +1,0 @@
-__pycache__
-.git
-venv
-
-data/uploads
-
-chroma_db
-
-*.pdf
