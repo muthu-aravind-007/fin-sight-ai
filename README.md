@@ -1,8 +1,8 @@
 # 📈 FinSight AI
 
-AI-Powered Financial Intelligence Platform built with FastAPI, Streamlit, LangGraph, Hybrid RAG, ChromaDB, and Ollama.
+A production-ready Multi-Agent Financial Intelligence Platform built with FastAPI, Streamlit, LangGraph, Hybrid RAG, ChromaDB, Ollama, and Model Context Protocol (MCP).
 
-FinSight AI helps investors, analysts, and researchers analyze companies, earnings transcripts, portfolios, and cross-company strategic trends using AI-powered financial intelligence workflows.
+FinSight AI helps investors, analysts, and researchers analyze companies, earnings transcripts, portfolios, and cross-company strategic trends using AI-powered financial intelligence workflows and production-ready AI tools.
 
 ---
 
@@ -106,19 +106,56 @@ Supports:
 
 ---
 
+---
+
+### 🔌 MCP (Model Context Protocol)
+
+FinSight AI exposes its AI capabilities as production-ready MCP tools, enabling AI assistants like Claude Desktop and Cursor to access financial intelligence workflows.
+
+Available MCP Tools:
+
+- Company Analysis
+- Company Comparison
+- Portfolio Analysis
+- News Analysis
+- Financial Metrics Analysis
+- Earnings PDF Indexing
+- Earnings Q&A (RAG)
+- Transcript Summarization
+- Multi-Transcript Analysis
+
+Supports:
+
+- FastMCP
+- Tool Calling
+- Local AI Workflows
+- AI Assistant Integration
+
+---
+
 ## 🧠 AI Architecture
 
 FinSight AI uses a multi-agent architecture powered by LangGraph.
 
-### Agents
+### AI Agents
 
-* Company Analysis Agent
-* News Analysis Agent
-* Risk Analysis Agent
-* Portfolio Analysis Agent
-* Earnings Analysis Agent
-* Earnings RAG Agent
-* Multi-Transcript RAG Agent
+- Company Analysis Agent
+- Metrics Analysis Agent
+- News Analysis Agent
+- Risk Analysis Agent
+- Investment Analysis Agent
+- Portfolio Analysis Agent
+- Earnings Analysis Agent
+- Earnings RAG Agent
+- Transcript Summary Agent
+- Multi-Transcript Intelligence Agent
+
+### Workflow
+
+- LangGraph Multi-Agent Orchestration
+- Stateful Financial Analysis Pipeline
+- Hybrid Retrieval Pipeline
+- MCP Tool Layer
 
 ---
 
@@ -169,6 +206,13 @@ The transcript intelligence system uses:
 * BGE Embeddings
 * BGE Reranker
 
+### AI Infrastructure
+
+- FastMCP
+- Model Context Protocol (MCP)
+- Hybrid Retrieval
+- Cross-Encoder Reranking
+
 ### Data
 
 * Yahoo Finance
@@ -183,10 +227,15 @@ app/
 ├── agents/
 ├── api/
 ├── graph/
-├── models/
+├── mcp/
 ├── prompts/
 ├── rag/
 ├── services/
+
+frontend/
+└── streamlit_app.py
+
+tests/
 
 frontend/
 └── streamlit_app.py
@@ -266,6 +315,13 @@ http://localhost:8501
 
 ---
 
+## ▶️ Run MCP Server
+
+```bash
+python -m app.mcp.server
+
+---
+
 ## 📊 Example Use Cases
 
 ### Financial Research
@@ -312,10 +368,16 @@ https://github.com/muthu-aravind-007
 
 ## ⭐ Key Highlights
 
-* Multi-Agent AI Architecture
-* LangGraph Workflow Orchestration
-* Hybrid RAG System
-* Cross-Transcript Intelligence
-* Local LLM Inference with Ollama
-* Financial Research Automation
-* Source-Grounded Answers
+- Multi-Agent AI Architecture
+- LangGraph Workflow Orchestration
+- Production-Ready MCP Server
+- FastMCP Tool Integration
+- Hybrid RAG Pipeline
+- Multi-Document Financial Intelligence
+- Cross-Transcript Analysis
+- Query Expansion
+- BM25 + Vector Retrieval
+- Cross-Encoder Reranking
+- Local LLM Inference (Ollama)
+- Financial Research Automation
+- Source-Grounded Answers

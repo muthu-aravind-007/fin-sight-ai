@@ -7,6 +7,7 @@ langchain
 langchain-community
 langchain-huggingface
 langchain-text-splitters
+langchain-chroma
 langgraph
 
 chromadb
@@ -30,3 +31,5 @@ requests
 feedparser
 
 python-multipart
+
+mcp
