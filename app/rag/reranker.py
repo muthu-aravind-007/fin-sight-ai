@@ -1,20 +1,37 @@
 from sentence_transformers import CrossEncoder
 
-reranker = CrossEncoder(
-    "BAAI/bge-reranker-base"
-)
+_reranker = None
+
+
+def get_reranker():
+
+    global _reranker
+
+    if _reranker is None:
+
+        _reranker = CrossEncoder(
+            "BAAI/bge-reranker-base"
+        )
+
+    return _reranker
+
 
 def rerank_documents(
     question,
     documents,
     top_k=10
 ):
+
+    reranker = get_reranker()
+
     pairs = [
         (question, doc.page_content)
         for doc in documents
     ]
 
-    scores = reranker.predict(pairs)
+    scores = reranker.predict(
+        pairs
+    )
 
     ranked = sorted(
         zip(documents, scores),

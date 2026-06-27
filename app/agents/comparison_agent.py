@@ -1,8 +1,6 @@
 from app.services.yahoo_finance import get_company_data
 from app.agents.metrics_agent import evaluate_metrics
 from app.services.llm_service import generate_analysis
-
-
 def compare_companies(ticker1, ticker2):
 
     company1 = get_company_data(ticker1)

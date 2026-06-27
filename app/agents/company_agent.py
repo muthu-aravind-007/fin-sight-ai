@@ -1,6 +1,4 @@
 from app.graph.workflow import financial_graph
-from app.agents.risk_agent import analyze_risk
-
 
 def analyze_company(ticker):
 
