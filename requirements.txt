@@ -19,7 +19,6 @@ sentence-transformers
 transformers
 huggingface-hub
 
-pymupdf
 pypdf
 
 ollama
