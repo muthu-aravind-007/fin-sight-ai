@@ -3,6 +3,14 @@ import requests
 import yfinance as yf
 import pandas as pd
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+API_URL = os.getenv(
+    "API_URL",
+    "http://127.0.0.1:8000"
+)
 
 st.set_page_config(
     page_title="FinSight AI",
@@ -43,7 +51,7 @@ with tab1:
         with st.spinner("Analyzing company..."):
 
             response = requests.post(
-                "http://127.0.0.1:8000/analyze",
+                f"{API_URL}/analyze",
                 json={
                     "ticker": ticker
                 }
@@ -195,7 +203,7 @@ with tab2:
         ):
 
             response = requests.post(
-                "http://127.0.0.1:8000/compare",
+                f"{API_URL}/compare",
                 json={
                     "ticker1": ticker1,
                     "ticker2": ticker2
@@ -274,7 +282,7 @@ with tab3:
         ):
 
             response = requests.post(
-                "http://127.0.0.1:8000/earnings",
+                f"{API_URL}/earnings",
                 json={
                     "transcript": transcript
                 }
@@ -311,7 +319,7 @@ with tab4:
         ):
 
             response = requests.post(
-                "http://127.0.0.1:8000/portfolio",
+                f"{API_URL}/portfolio",
                 json={
                     "tickers": tickers.split(",")
                 }
@@ -420,7 +428,7 @@ with tab5:
                     )
 
                 response = requests.post(
-                    "http://127.0.0.1:8000/transcript-summary",
+                    f"{API_URL}/transcript-summary",
                     json={
                         "pdf_path": pdf_path
                     }
@@ -483,7 +491,7 @@ with tab5:
                     )
 
                 response = requests.post(
-                    "http://127.0.0.1:8000/earnings-rag",
+                    f"{API_URL}/earnings-rag",
                     json={
                         "pdf_path": pdf_path,
                         "question": question
@@ -649,7 +657,7 @@ with tab6:
                     )
 
                 response = requests.post(
-                    "http://127.0.0.1:8000/multi-rag",
+                    f"{API_URL}/multi-rag",
                     json={
                         "documents": documents_payload,
                         "question": question
