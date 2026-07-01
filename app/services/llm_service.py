@@ -1,8 +1,8 @@
 import os
 
-from services.providers import (
-    ollama_provider,
-    groq_provider
+from app.services.providers import (
+    groq_provider,
+    ollama_provider
 )
 
 PROVIDER = os.getenv(

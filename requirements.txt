@@ -6,10 +6,6 @@ python-dotenv
 streamlit
 
 langchain
-langchain-community
-langchain-huggingface
-langchain-text-splitters
-langchain-chroma
 langgraph
 
 chromadb
@@ -30,7 +26,5 @@ numpy
 
 requests
 feedparser
-
-python-multipart
 
 mcp
