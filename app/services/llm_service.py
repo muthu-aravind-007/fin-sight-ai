@@ -1,34 +1,35 @@
 import os
+import ollama
 
-from app.services.providers import (
-    groq_provider,
-    ollama_provider
+client = ollama.Client(
+    host=os.getenv(
+        "OLLAMA_HOST",
+        "http://localhost:11434"
+    )
 )
-
-PROVIDER = os.getenv(
-    "LLM_PROVIDER",
-    "ollama"
-)
-
 
 def generate_analysis(
     prompt,
     comparison_mode=False
 ):
 
-    if PROVIDER == "ollama":
-        return ollama_provider.generate(
-            prompt,
-            comparison_mode
-        )
+    num_predict = (
+        650
+        if comparison_mode
+        else 700
+    )
 
-    elif PROVIDER == "groq":
-        return groq_provider.generate(
-            prompt,
-            comparison_mode
-        )
+    response = client.chat(
+        model="qwen2.5:7b",
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        options={
+            "num_predict": num_predict
+        }
+    )
 
-    else:
-        raise ValueError(
-            f"Unsupported provider: {PROVIDER}"
-        )
+    return response["message"]["content"]
