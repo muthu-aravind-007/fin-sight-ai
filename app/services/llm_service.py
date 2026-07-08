@@ -1,17 +1,29 @@
 import os
-import ollama
+from dotenv import load_dotenv
 
-client = ollama.Client(
-    host=os.getenv(
-        "OLLAMA_HOST",
-        "http://localhost:11434"
+load_dotenv()
+
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")
+
+if LLM_PROVIDER == "groq":
+    from groq import Groq
+
+    client = Groq(
+        api_key=os.getenv("GROQ_API_KEY")
     )
-)
 
-def generate_analysis(
-    prompt,
-    comparison_mode=False
-):
+else:
+    import ollama
+
+    client = ollama.Client(
+        host=os.getenv(
+            "OLLAMA_HOST",
+            "http://localhost:11434"
+        )
+    )
+
+
+def generate_analysis(prompt, comparison_mode=False):
 
     num_predict = (
         650
@@ -19,17 +31,35 @@ def generate_analysis(
         else 700
     )
 
-    response = client.chat(
-        model="qwen2.5:7b",
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-        options={
-            "num_predict": num_predict
-        }
-    )
+    if LLM_PROVIDER == "groq":
 
-    return response["message"]["content"]
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.2,
+            max_tokens=num_predict
+        )
+
+        return response.choices[0].message.content
+
+    else:
+
+        response = client.chat(
+            model="qwen2.5:7b",
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            options={
+                "num_predict": num_predict
+            }
+        )
+
+        return response["message"]["content"]
