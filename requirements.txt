@@ -23,7 +23,6 @@ pymupdf
 pypdf
 
 ollama
-groq
 
 yfinance
 pandas

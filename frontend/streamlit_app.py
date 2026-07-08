@@ -4,8 +4,6 @@ import yfinance as yf
 import pandas as pd
 import os
 
-API_URL = os.getenv("API_URL")
-
 st.set_page_config(
     page_title="FinSight AI",
     layout="wide"
@@ -45,7 +43,7 @@ with tab1:
         with st.spinner("Analyzing company..."):
 
             response = requests.post(
-                f"{API_URL}/analyze",
+                "http://127.0.0.1:8000/analyze",
                 json={
                     "ticker": ticker
                 }
@@ -197,7 +195,7 @@ with tab2:
         ):
 
             response = requests.post(
-                f"{API_URL}/compare",
+                "http://127.0.0.1:8000/compare",
                 json={
                     "ticker1": ticker1,
                     "ticker2": ticker2
@@ -276,7 +274,7 @@ with tab3:
         ):
 
             response = requests.post(
-                f"{API_URL}/earnings",
+                "http://127.0.0.1:8000/earnings",
                 json={
                     "transcript": transcript
                 }
@@ -313,7 +311,7 @@ with tab4:
         ):
 
             response = requests.post(
-                f"{API_URL}/portfolio",
+                "http://127.0.0.1:8000/portfolio",
                 json={
                     "tickers": tickers.split(",")
                 }
@@ -422,7 +420,7 @@ with tab5:
                     )
 
                 response = requests.post(
-                    f"{API_URL}/transcript-summary",
+                    "http://127.0.0.1:8000/transcript-summary",
                     json={
                         "pdf_path": pdf_path
                     }
@@ -485,7 +483,7 @@ with tab5:
                     )
 
                 response = requests.post(
-                    f"{API_URL}/earnings-rag",
+                    "http://127.0.0.1:8000/earnings-rag",
                     json={
                         "pdf_path": pdf_path,
                         "question": question
@@ -651,7 +649,7 @@ with tab6:
                     )
 
                 response = requests.post(
-                    f"{API_URL}/multi-rag",
+                    "http://127.0.0.1:8000/multi-rag",
                     json={
                         "documents": documents_payload,
                         "question": question
