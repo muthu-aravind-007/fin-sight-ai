@@ -253,14 +253,6 @@ git clone https://github.com/muthu-aravind-007/fin-sight-ai.git
 cd fin-sight-ai
 ```
 
-### Create Virtual Environment
-
-```bash
-python -m venv venv
-
-venv\Scripts\activate
-```
-
 ### Install Dependencies
 
 ```bash
