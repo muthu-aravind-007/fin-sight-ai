@@ -82,3 +82,34 @@ def query_earnings_pdf(
         "context": context,
         "source_pages": source_pages,
     }
+
+def analyze_earnings_rag(
+    pdf_path,
+    question,
+):
+    """
+    Index an earnings PDF and answer a question
+    using RAG.
+    """
+
+    import os
+
+    persist_directory = os.path.splitext(pdf_path)[0] + "_chroma"
+
+    index_result = index_earnings_pdf(
+        pdf_path=pdf_path,
+        persist_directory=persist_directory,
+    )
+
+    result = query_earnings_pdf(
+        question=question,
+        persist_directory=persist_directory,
+    )
+
+    return {
+        "question": question,
+        "answer": result["answer"],
+        "context": result["context"],
+        "source_pages": result["source_pages"],
+        "index": index_result,
+    }
