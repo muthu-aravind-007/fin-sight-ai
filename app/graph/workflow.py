@@ -1,4 +1,6 @@
-from langgraph.graph import StateGraph, END
+import time
+
+from langgraph.graph import StateGraph, START, END
 
 from app.graph.state import FinancialState
 
@@ -10,6 +12,14 @@ from app.prompts.company_prompt import build_company_prompt
 from app.agents.risk_agent import analyze_risk
 from app.agents.investment_agent import analyze_investment
 
+def timed_node(name, fn, state):
+    start = time.perf_counter()
+
+    try:
+        return fn(state)
+    finally:
+        elapsed = time.perf_counter() - start
+        print(f"[LATENCY] {name}: {elapsed:.2f}s")
 
 def company_node(state: FinancialState):
 
@@ -67,24 +77,57 @@ def risk_node(state):
         )
     }
 
-def final_analysis_node(
-    state: FinancialState
-):
+
+def final_analysis_node(state: FinancialState):
+    company_data = state["company_data"]
+    metrics = state["metrics"]
+
+    # Keep specialist findings concise while preserving
+    # their recommendations, scores, and key evidence.
+    risk = " ".join(
+        str(state["risk_analysis"]).split()
+    )[:1200]
+
+    investment = " ".join(
+        str(state["investment_analysis"]).split()
+    )[:1200]
+
+    # Keep the five most recent headlines.
+    news_items = state["news"]
+
+    if isinstance(news_items, list):
+        headlines = []
+
+        for item in news_items[:5]:
+            if isinstance(item, dict):
+                title = item.get("title", "")
+                if title:
+                    headlines.append(str(title))
+            else:
+                headlines.append(str(item))
+
+        news = "\n".join(headlines)
+    else:
+        news = str(news_items)
+
+    news = " ".join(news.split())[:800]
 
     prompt = build_company_prompt(
-        state["company_data"],
-        state["metrics"],
-        state["news"]
+        company_data,
+        metrics,
+        news,
+        risk,
+        investment,
     )
 
     analysis = generate_analysis(
-        prompt
+        prompt,
+        num_predict=1000,
     )
 
     return {
         "analysis": analysis
     }
-
 
 builder = StateGraph(
     FinancialState
@@ -92,66 +135,52 @@ builder = StateGraph(
 
 builder.add_node(
     "company",
-    company_node
+    lambda state: timed_node(
+        "company", company_node, state
+    )
 )
 
 builder.add_node(
     "metrics",
-    metrics_node
+    lambda state: timed_node(
+        "metrics", metrics_node, state
+    )
 )
 
 builder.add_node(
     "news",
-    news_node
-)
-
-builder.add_node(
-    "investment",
-    investment_node
+    lambda state: timed_node(
+        "news", news_node, state
+    )
 )
 
 builder.add_node(
     "risk",
-    risk_node
+    lambda state: timed_node(
+        "risk", risk_node, state
+    )
+)
+
+builder.add_node(
+    "investment",
+    lambda state: timed_node(
+        "investment", investment_node, state
+    )
 )
 
 builder.add_node(
     "final_analysis",
-    final_analysis_node
+    lambda state: timed_node(
+        "final_analysis", final_analysis_node, state
+    )
 )
 
-builder.set_entry_point(
-    "company"
-)
-
-builder.add_edge(
-    "company",
-    "metrics"
-)
-
-builder.add_edge(
-    "metrics",
-    "news"
-)
-
-builder.add_edge(
-    "news",
-    "risk"
-)
-
-builder.add_edge(
-    "risk",
-    "investment"
-)
-
-builder.add_edge(
-    "investment",
-    "final_analysis"
-)
-
-builder.add_edge(
-    "final_analysis",
-    END
-)
+builder.add_edge(START, "company")
+builder.add_edge("company", "metrics")
+builder.add_edge("metrics", "news")
+builder.add_edge("news", "risk")
+builder.add_edge("risk", "investment")
+builder.add_edge("investment", "final_analysis")
+builder.add_edge("final_analysis", END)
 
 financial_graph = builder.compile()
