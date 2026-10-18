@@ -1,6 +1,6 @@
 # 📈 FinSight AI
 
-A production-ready Multi-Agent Financial Intelligence Platform built with FastAPI, Streamlit, LangGraph, Hybrid RAG, ChromaDB, Ollama, and Model Context Protocol (MCP).
+A Multi-Agent Financial Intelligence Platform built with FastAPI, Streamlit, LangGraph, Hybrid RAG, ChromaDB, Ollama, and Model Context Protocol (MCP).
 
 FinSight AI helps investors, analysts, and researchers analyze companies, earnings transcripts, portfolios, and cross-company strategic trends using AI-powered financial intelligence workflows and production-ready AI tools.
 
