@@ -128,9 +128,25 @@ def analyze_multiple_transcripts(
                 company["ticker"]
             )
 
+    # Remove duplicates while preserving order
     mentioned_companies = list(
-        set(mentioned_companies)
+        dict.fromkeys(mentioned_companies)
     )
+
+    # For comparison questions, use companies
+    # represented in the uploaded transcripts.
+    if comparison_mode:
+        uploaded_companies = list(
+            dict.fromkeys(
+                chunk.metadata.get("company")
+                for chunk in all_chunks
+                if chunk.metadata.get("company")
+            )
+        )
+
+        if len(uploaded_companies) >= 2:
+            mentioned_companies = uploaded_companies
+
 
     print(
         "\nMentioned Companies:",
@@ -216,13 +232,42 @@ def analyze_multiple_transcripts(
 
     t = time.time()
 
+    # Always index the complete uploaded corpus.
+    # Never build the shared index from question-filtered chunks.
     db = build_multi_document_store(
-        filtered_chunks,
+        all_chunks,
         cache_key,
     )
 
-    
-    vector_retriever = get_retriever(db)
+    metadata_conditions = []
+
+    if mentioned_companies:
+        metadata_conditions.append({
+            "company": {
+                "$in": mentioned_companies
+            }
+        })
+
+    if quarters:
+        metadata_conditions.append({
+            "quarter": {
+                "$in": quarters
+            }
+        })
+
+    metadata_filter = None
+
+    if len(metadata_conditions) == 1:
+        metadata_filter = metadata_conditions[0]
+    elif len(metadata_conditions) > 1:
+        metadata_filter = {
+            "$and": metadata_conditions
+        }
+
+    vector_retriever = get_retriever(
+        db,
+        metadata_filter=metadata_filter,
+    )
 
     bm25_retriever = get_bm25_retriever(
         filtered_chunks
@@ -268,10 +313,54 @@ def analyze_multiple_transcripts(
         "sec"
     )
 
-    results = (
-        vector_results
-        + bm25_results
-    )
+    
+    # ------------------------
+    # Reciprocal Rank Fusion
+    # ------------------------
+
+    def reciprocal_rank_fusion(
+        ranked_lists,
+        k=60
+    ):
+        scores = {}
+        documents = {}
+
+        for ranked_list in ranked_lists:
+            for rank, doc in enumerate(
+                ranked_list,
+                start=1
+            ):
+                key = (
+                    doc.metadata.get("company"),
+                    doc.metadata.get("quarter"),
+                    doc.metadata.get("page"),
+                    doc.page_content
+                )
+
+                scores[key] = (
+                    scores.get(key, 0.0)
+                    + 1.0 / (k + rank)
+                )
+
+                documents[key] = doc
+
+        ranked_keys = sorted(
+            scores,
+            key=lambda key: scores[key],
+            reverse=True
+        )
+
+        return [
+            documents[key]
+            for key in ranked_keys
+        ]
+
+
+    results = reciprocal_rank_fusion([
+        vector_results,
+        bm25_results
+    ])
+
 
     # ------------------------
     # Deduplicate
@@ -285,7 +374,8 @@ def analyze_multiple_transcripts(
         key = (
             doc.metadata.get("company"),
             doc.metadata.get("quarter"),
-            doc.metadata.get("page")
+            doc.metadata.get("page"),
+            doc.page_content
         )
 
         if key not in seen_pages:
@@ -316,45 +406,39 @@ def analyze_multiple_transcripts(
     t = time.time()
 
     if comparison_mode and len(mentioned_companies) >= 2:
-
         grouped_results = []
 
         for company in mentioned_companies:
-
             company_docs = [
-
                 doc
-
                 for doc in results
-
                 if doc.metadata.get("company") == company
-
             ]
+
+            if not company_docs:
+                continue
 
             company_docs = rerank_documents(
                 expanded_question,
                 company_docs,
-                top_k=5
+                top_k=5,
             )
 
-            grouped_results.extend(
-                company_docs
-            )
+            grouped_results.extend(company_docs)
 
         results = grouped_results
 
     else:
-
         results = rerank_documents(
             expanded_question,
             results,
-            top_k=8
+            top_k=8,
         )
 
     print(
         "Reranking:",
         round(time.time() - t, 2),
-        "sec"
+        "sec",
     )
 
     print("\nRetrieved Documents:")
@@ -408,16 +492,16 @@ def analyze_multiple_transcripts(
 
         context_parts.append(
             f"""
-Source ID: {source_id}
+            Source ID: {source_id}
 
-Company: {company}
-Quarter: {quarter}
-Page: {page}
+            Company: {company}
+            Quarter: {quarter}
+            Page: {page}
 
-{doc.page_content}
+            {doc.page_content}
 
-----------------------------------------
-"""
+            ----------------------------------------
+            """
         )
 
     context = "\n\n".join(
@@ -434,7 +518,8 @@ Page: {page}
     prompt = build_multi_rag_prompt(
         context,
         question,
-        comparison_mode
+        comparison_mode,
+        question_data.get("analysis_intent", "general"),
     )
 
     print(

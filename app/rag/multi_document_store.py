@@ -1,17 +1,16 @@
-
 import hashlib
 import json
 import os
-CACHE_VERSION = "v2_ocr"
 
 from app.rag.vector_store import create_vector_store
 from app.rag.load_vector_store import load_vector_store
 
+
+CACHE_VERSION = "v3_full_corpus"
+
+
 def build_cache_key(documents):
-    """
-    Generate a stable cache key from document metadata
-    and file contents.
-    """
+    """Create a stable key for the complete uploaded corpus."""
     entries = []
 
     for doc in documents:
@@ -57,29 +56,37 @@ def build_cache_key(documents):
     ).hexdigest()
 
 
-
-def build_multi_document_store(
-    all_chunks,
-    cache_key,
-):
+def build_multi_document_store(all_chunks, cache_key):
+    """
+    Build or load a vector index containing every chunk
+    from the uploaded corpus, independent of the question.
+    """
     persist_directory = os.path.join(
         "chroma_db",
         cache_key,
     )
-
-    if os.path.isdir(persist_directory):
-        print("Loading cached vector store...")
-
-        return load_vector_store(
-            persist_directory
-        )
 
     if not all_chunks:
         raise ValueError(
             "Cannot create a vector store without document chunks."
         )
 
-    print("Creating new vector store...")
+    if os.path.isdir(persist_directory):
+        try:
+            print("Loading cached full-corpus vector store...")
+            return load_vector_store(persist_directory)
+        except Exception as exc:
+            print(
+                "Cached vector store could not be loaded. "
+                f"Rebuilding it. Reason: {exc}"
+            )
+
+    print("Creating full-corpus vector store...")
+
+    os.makedirs(
+        os.path.dirname(persist_directory),
+        exist_ok=True,
+    )
 
     return create_vector_store(
         all_chunks,

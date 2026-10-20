@@ -48,14 +48,27 @@ with tab1:
                     "ticker": ticker
                 }
             )
-
+            
             if not response.ok:
                 st.error(
-                    f"Multi-RAG request failed "
-                    f"({response.status_code}): "
-                    f"{response.text[:1000]}"
+                    f"FinSight AI request failed "
+                    f"({response.status_code}). "
+                    "Please try again."
+                )
+
+                with st.expander("Technical details"):
+                    st.code(response.text[:2000])
+
+                st.stop()
+
+            try:
+                result = response.json()
+            except ValueError:
+                st.error(
+                    "FinSight AI returned an invalid response."
                 )
                 st.stop()
+
 
             result = response.json()
 

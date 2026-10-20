@@ -16,7 +16,7 @@ def generate_analysis(
     num_predict=None
 ):
     if num_predict is None:
-        num_predict = 650 if comparison_mode else 1200
+        num_predict = 900 if comparison_mode else 1200
 
     start = time.perf_counter()
 

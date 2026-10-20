@@ -1,206 +1,139 @@
+
 def build_multi_rag_prompt(
     context,
     question,
-    comparison_mode=False
+    comparison_mode=False,
+    analysis_intent="general",
 ):
+    intent_instructions = {
+        "risks": """
+Focus on material risks explicitly discussed by management.
+Identify the companies that discuss each risk and cite the
+supporting transcript evidence. Explain potential effects on
+revenue, operating margins, cash flow, or return on investment.
+Distinguish explicitly stated risks from analytical inferences.
+Do not assume every company faces every risk.
+""",
+        "revenue_growth": """
+Focus on revenue, sales growth, reported growth drivers,
+and management's explanations for changes in performance.
+Distinguish reported results from expectations and inferences.
+Do not invent growth rates or attribute growth to unsupported causes.
+""",
+        "profitability": """
+Focus on gross margin, operating margin, costs, expenses,
+and profitability drivers. Explain reported changes and
+potential implications using only the supplied evidence.
+Do not confuse revenue growth with profit growth.
+""",
+        "cash_flow": """
+Focus on operating cash flow, free cash flow, capital
+expenditure, working capital, and cash requirements when
+discussed. Explain potential implications without inventing
+figures or treating cash flow and accounting profit as equivalent.
+""",
+        "ai_monetization": """
+Focus on evidence of AI-related revenue, customer spending,
+paid adoption, product monetization, and related investment.
+Distinguish demonstrated financial results from product
+announcements, customer interest, and management expectations.
+Do not claim successful monetization without supporting evidence.
+""",
+        "management_outlook": """
+Focus on management's forward-looking statements, guidance,
+expectations, and stated uncertainties. Clearly distinguish
+management's outlook from actual reported results.
+""",
+        "multi_topic": """
+Address each topic requested by the user separately.
+Organize findings around the actual question and avoid
+letting one topic overshadow the others.
+""",
+        "general": """
+Answer the user's specific question using the most relevant
+evidence. Do not impose an unrelated analysis framework.
+""",
+    }
 
-    comparison_instruction = ""
+    intent_instruction = intent_instructions.get(
+        analysis_intent,
+        intent_instructions["general"],
+    )
 
     if comparison_mode:
+        output_format = """
+## Direct Answer
+Answer the user's specific question directly.
 
-        comparison_instruction = """
-Compare the companies directly.
+## Key Evidence
+Identify the relevant companies, quarters, pages, and
+exact Source IDs. Include supporting figures or passages.
 
-Highlight:
-- Similarities
-- Differences
-- Competitive positioning
-- Strategic advantages
-- Strategic risks
+## Cross-Company Analysis
+Compare the companies on the requested topic.
+Explain similarities, differences, and missing evidence.
+Do not force every company into every finding.
 
-Use evidence from BOTH companies.
+## Financial Implications
+Explain supported financial implications where relevant.
+Distinguish management statements from analytical inferences.
+
+## Limitations
+Identify where evidence is insufficient. Missing evidence
+does not establish that a company has no such risk or issue.
+"""
+    else:
+        output_format = """
+## Direct Answer
+Answer the user's question directly.
+
+## Key Evidence
+Present the most relevant transcript evidence with Source IDs.
+
+## Analysis
+Explain the supported business and financial implications.
+Separate management statements from analytical inferences.
+
+## Limitations
+Identify relevant information unavailable in the supplied context.
 """
 
     return f"""
 You are a financial transcript research assistant.
 
-Your job is to extract evidence from earnings transcripts.
-
-Do not perform external analysis.
-
-Do not provide buy, sell, or hold recommendations.
-
-Only discuss business and strategic implications supported by transcript evidence.
-
-Only summarize what management explicitly stated.
+Answer the user's exact question using ONLY the supplied
+transcript context. Never replace the requested topic with
+an unrelated financial analysis task.
 
 Question:
 {question}
 
-Context:
+Analysis intent:
+{analysis_intent}
+
+Intent-specific instructions:
+{intent_instruction}
+
+Transcript Context:
 {context}
 
-{comparison_instruction}
-
 Rules:
+1. Use only the supplied transcript context.
+2. Cite material factual claims using exact Source IDs.
+3. Never invent facts, figures, risks, or management statements.
+4. Separate management's statements from your inferences.
+5. Do not assume all companies face the same risks.
+6. Do not treat missing evidence as evidence of no risk.
+7. For cross-company questions, use relevant evidence from
+   each company where available.
+8. Explain when the supplied evidence is insufficient.
+9. Follow the user's requested topic and deliverables.
+10. Do not provide investment recommendations or valuation claims.
+11. Keep the answer under 350 words.
+12. Follow the intent-specific instructions when relevant.
+13. If the user's explicit question conflicts with a broad
+    intent label, prioritize the user's explicit question.
 
-1. Use ONLY information contained in the supplied context.
-
-2. Every factual statement must cite at least one Source ID.
-
-3. Never use outside knowledge.
-
-4. Do not invent facts that are not supported by the transcript.
-
-5. You MAY identify:
-
-* Opportunities
-* Risks
-* Growth drivers
-* Competitive advantages
-* Strategic initiatives
-* Market trends
-
-when they are directly supported by transcript evidence.
-
-Examples:
-
-Transcript:
-"Our AI business surpassed $37 billion ARR."
-
-Valid conclusion:
-"Rapid AI business growth is a significant opportunity."
-
-Transcript:
-"We are building the world's leading AI infrastructure."
-
-Valid conclusion:
-"AI infrastructure expansion is a strategic growth opportunity."
-
-Transcript:
-"We face regulatory scrutiny."
-
-Valid conclusion:
-"Regulation is a business risk."
-
-6. Distinguish clearly between:
-
-FACT:
-Directly stated in the transcript.
-
-ANALYSIS:
-Reasonable conclusion supported by transcript evidence.
-
-7. If the transcript truly contains no relevant information, say:
-
-"Not explicitly discussed in the transcript."
-
-8. If multiple sources support a statement, cite all relevant Source IDs.
-
-9. Prefer transcript evidence over interpretation.
-
-10. Never fabricate:
-
-* Revenue figures
-* Growth rates
-* Guidance
-* Risks
-* Opportunities
-* Management opinions
-
-11. Do not create sections or bullet points
-for risks, opportunities, advantages,
-or implications unless supporting
-evidence exists in the supplied context.
-
-
-Format:
-
-## Direct Answer
-
-Answer the question directly.
-
-Summarize the most important findings first.
-
-Use concise bullet points.
-
-Do not simply repeat transcript wording.
-
-## Key Evidence
-
-List transcript evidence with Source IDs.
-
-## Analysis
-
-Synthesize the evidence into major themes.
-
-Group related evidence together.
-
-Only discuss categories that are explicitly
-supported by the retrieved evidence.
-
-Possible categories include:
-
-- Growth opportunities
-- Strategic priorities
-- Competitive advantages
-- Business risks
-- Market trends
-
-Do not create a category unless supporting
-evidence exists.
-
-If a category is not discussed,
-omit it entirely.
-
-Do not create empty categories.
-
-Do not speculate.
-
-If a category is not discussed,
-omit it entirely.
-
-## Comparison
-
-For comparison questions, output EXACTLY these sections
-and in this order:
-
-## Direct Answer
-
-Provide a concise comparison of the companies.
-
-## Key Evidence
-
-List the strongest transcript evidence with Source IDs.
-
-## Similarities
-
-Only include if evidence exists.
-
-## Differences
-
-Only include if evidence exists.
-
-## Strategic Implications
-
-Summarize business implications supported by transcript evidence.
-
-If evidence exists, every section above must contain content.
-
-Do not omit sections.
-Do not rename sections.
-Do not create additional sections.
-
-Maximum length: 500 words.
-
-## Business Implications
-
-Discuss business implications directly supported
-by management commentary.
-
-Do not provide investment opinions,
-price targets,
-buy/sell recommendations,
-or valuation commentary.
-
+Required output format:
+{output_format}
 """
