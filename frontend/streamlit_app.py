@@ -49,6 +49,14 @@ with tab1:
                 }
             )
 
+            if not response.ok:
+                st.error(
+                    f"Multi-RAG request failed "
+                    f"({response.status_code}): "
+                    f"{response.text[:1000]}"
+                )
+                st.stop()
+
             result = response.json()
 
             company = result["company_data"]

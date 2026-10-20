@@ -7,7 +7,8 @@ from app.rag.document_processor import (
 )
 
 from app.rag.multi_document_store import (
-    build_multi_document_store
+    build_multi_document_store,
+    build_cache_key,
 )
 
 from app.rag.retriever import (
@@ -211,40 +212,28 @@ def analyze_multiple_transcripts(
         f"{len(filtered_chunks)}"
     )
 
-    cache_key = "_".join(
-        sorted(
-            [
-                f"{doc['company']}_{doc['quarter']}"
-                for doc in documents
-            ]
-        )
-    )
+    cache_key = build_cache_key(documents)
 
     t = time.time()
 
     db = build_multi_document_store(
         filtered_chunks,
-        cache_key
+        cache_key,
     )
+
+    
+    vector_retriever = get_retriever(db)
+
+    bm25_retriever = get_bm25_retriever(
+        filtered_chunks
+    )
+
+    expanded_question = expand_query(question)
 
     print(
         "Vector Store:",
         round(time.time() - t, 2),
         "sec"
-    )
-
-    vector_retriever = get_retriever(
-        db
-    )
-
-    bm25_retriever = (
-        get_bm25_retriever(
-            filtered_chunks
-        )
-    )
-
-    expanded_question = expand_query(
-        question
     )
 
     # ------------------------
