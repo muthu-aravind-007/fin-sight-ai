@@ -602,7 +602,7 @@ with tab6:
             )
 
     question = st.text_input(
-        "Ask a cross-company question",
+        "Ask a question",
         placeholder="Compare AI strategy between NVIDIA and Microsoft"
     )
 
@@ -679,10 +679,6 @@ with tab6:
 
                 result = response.json()
 
-                st.subheader(
-                    "🤖 AI Analysis"
-                )
-
                 st.markdown(
                     result["answer"]
                 )
@@ -691,18 +687,13 @@ with tab6:
                     "📚 Retrieved Sources"
                 ):
 
-                    sources_df = pd.DataFrame(
-                        result["sources"]
-                    )
+                    sources_df = pd.DataFrame(result["sources"])
 
-                    sources_df.columns = [
-                        "Company",
-                        "Quarter",
-                        "Page"
-                    ]
-
-                    st.dataframe(
-                        sources_df,
-                        use_container_width=True,
-                        hide_index=True
-                    )
+                    if not sources_df.empty:
+                        st.dataframe(
+                            sources_df,
+                            use_container_width=True,
+                            hide_index=True
+                        )
+                    else:
+                        st.info("No source documents were returned.")

@@ -6,7 +6,7 @@ from app.rag.vector_store import create_vector_store
 from app.rag.load_vector_store import load_vector_store
 
 
-CACHE_VERSION = "v3_full_corpus"
+CACHE_VERSION = "v4_full_corpus_chunks"
 
 
 def build_cache_key(documents):

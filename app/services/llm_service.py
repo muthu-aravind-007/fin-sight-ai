@@ -3,7 +3,7 @@ import os
 import time
 import ollama
 
-MODEL_NAME = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
+MODEL_NAME = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
 
 client = ollama.Client(
     host=os.getenv("OLLAMA_HOST", "http://localhost:11434")
@@ -16,7 +16,7 @@ def generate_analysis(
     num_predict=None
 ):
     if num_predict is None:
-        num_predict = 900 if comparison_mode else 1200
+        num_predict = 1600 if comparison_mode else 1200
 
     start = time.perf_counter()
 

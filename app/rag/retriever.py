@@ -1,7 +1,7 @@
 def get_retriever(db, metadata_filter=None):
     search_kwargs = {
-        "k": 20,
-        "fetch_k": 75,
+        "k": 10,
+        "fetch_k": 30,
     }
 
     if metadata_filter:
