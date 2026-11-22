@@ -1,4 +1,5 @@
 import time
+import math
 
 from langgraph.graph import StateGraph, START, END
 
@@ -111,6 +112,104 @@ def final_analysis_node(state: FinancialState):
         news = str(news_items)
 
     news = " ".join(news.split())[:800]
+
+
+    # --------------------------------------------------
+    # Deterministic fallback for insufficient evidence
+    # --------------------------------------------------
+
+    required_fields = [
+        "market_cap",
+        "pe_ratio",
+        "revenue",
+    ]
+
+    has_complete_financial_data = True
+
+    for field in required_fields:
+        value = company_data.get(field)
+
+        try:
+            if value is None or not math.isfinite(float(value)):
+                has_complete_financial_data = False
+                break
+        except (TypeError, ValueError):
+            has_complete_financial_data = False
+            break
+
+    has_news_evidence = bool(news.strip())
+
+    if not has_complete_financial_data and not has_news_evidence:
+
+        company_name = (
+            company_data.get("name")
+            or state["ticker"]
+        )
+
+        analysis = f"""
+# 1. Company Overview
+
+**{company_name}**
+
+Company identification is available, but sufficient financial
+and news information is unavailable to produce a reliable
+company research assessment.
+
+# 2. Financial Health Assessment
+
+- Market Capitalization: N/A
+- P/E Ratio: N/A
+- Revenue: N/A
+- Valuation: Unknown
+- Revenue Scale: Unknown
+- Risk: Unknown
+
+Financial health cannot be reliably assessed without the
+necessary financial information.
+
+# 3. Positive Signals
+
+No sufficiently supported positive financial or news signals
+are available for evaluation.
+
+This does not mean that the company has no positive attributes.
+
+# 4. Key Risks
+
+Company-specific risks cannot be reliably established from
+the available information.
+
+Valuation, business, competition, market, and regulatory risks
+remain unassessed.
+
+# 5. Investment Outlook
+
+**Recommendation: INSUFFICIENT DATA**
+
+**Confidence Score: N/A**
+
+The available evidence is inadequate to support a meaningful
+investment recommendation. A BUY, HOLD, or SELL conclusion
+should not be inferred.
+
+Additional verified financial information and relevant news
+evidence are required.
+
+# 6. Final Rating
+
+**Insufficient Data**
+
+A directional investment rating cannot be justified using
+the currently available evidence.
+
+The outlook can be reassessed when reliable financial figures
+and relevant supporting information become available.
+"""
+
+        return {
+            "analysis": analysis.strip()
+        }
+
 
     prompt = build_company_prompt(
         company_data,

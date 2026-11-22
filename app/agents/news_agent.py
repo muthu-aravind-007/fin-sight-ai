@@ -1,3 +1,4 @@
+
 import time
 
 from app.services.news_service import get_company_news
@@ -19,10 +20,34 @@ def analyze_news(company_name):
         f"{time.perf_counter() - start:.2f}s"
     )
 
+    # Do not generate sentiment without news evidence
+    if not news:
+        return {
+            "news": [],
+            "sentiment": (
+                "Overall Sentiment: Insufficient Data\n\n"
+                "Sentiment Score: N/A\n\n"
+                "No relevant news headlines were available. "
+                "A reliable news sentiment assessment cannot "
+                "be generated."
+            )
+        }
+
     headlines = [
         item["title"]
         for item in news
+        if item.get("title")
     ]
+
+    if not headlines:
+        return {
+            "news": news,
+            "sentiment": (
+                "Overall Sentiment: Insufficient Data\n\n"
+                "Sentiment Score: N/A\n\n"
+                "No usable news headlines were available."
+            )
+        }
 
     prompt = build_news_sentiment_prompt(
         company_name,
