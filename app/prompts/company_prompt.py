@@ -195,6 +195,12 @@ Use these exact sections:
 Summarize the supplied company identification,
 sector, industry, and financial figures.
 
+Financial figures are retrieved from Yahoo Finance.
+Attribute them to Yahoo Finance rather than implying
+they were independently verified against company filings.
+Do not assume the figures represent a particular
+reporting period unless that period is supplied.
+
 Describe market capitalization and revenue as
 reported scale indicators only.
 
