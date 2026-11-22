@@ -139,8 +139,7 @@ def final_analysis_node(state: FinancialState):
 
     has_news_evidence = bool(news.strip())
 
-    if not has_complete_financial_data and not has_news_evidence:
-
+    if not has_complete_financial_data:
         company_name = (
             company_data.get("name")
             or state["ticker"]
