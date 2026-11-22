@@ -6,12 +6,26 @@ def build_company_prompt(
     risk_analysis,
     investment_analysis,
 ):
+    market_cap_value = company_data.get("market_cap")
+    revenue_value = company_data.get("revenue")
+    pe_ratio_value = company_data.get("pe_ratio")
+
     market_cap = (
-        company_data["market_cap"] / 1_000_000_000_000
+        f"${market_cap_value / 1_000_000_000_000:.2f} Trillion"
+        if market_cap_value is not None
+        else "N/A"
     )
 
     revenue = (
-        company_data["revenue"] / 1_000_000_000
+        f"${revenue_value / 1_000_000_000:.2f} Billion"
+        if revenue_value is not None
+        else "N/A"
+    )
+
+    pe_ratio = (
+        f"{pe_ratio_value:.2f}"
+        if pe_ratio_value is not None
+        else "N/A"
     )
 
     return f"""
@@ -20,13 +34,13 @@ Produce a balanced, evidence-based company report.
 
 COMPANY INFORMATION
 
-Name: {company_data["name"]}
-Sector: {company_data["sector"]}
-Industry: {company_data["industry"]}
+Name: {company_data.get("name") or "N/A"}
+Sector: {company_data.get("sector") or "N/A"}
+Industry: {company_data.get("industry") or "N/A"}
 
-Market Cap: ${market_cap:.2f} Trillion
-Revenue: ${revenue:.2f} Billion
-PE Ratio: {company_data["pe_ratio"]:.2f}
+Market Cap: {market_cap}
+Revenue: {revenue}
+PE Ratio: {pe_ratio}
 
 FINANCIAL METRICS
 
