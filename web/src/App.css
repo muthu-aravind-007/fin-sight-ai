@@ -939,3 +939,27 @@
     padding: 26px 22px;
   }
 }
+
+.report-save-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.save-success,
+.save-error {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+}
+
+.save-success {
+  color: #9bd4a8;
+}
+
+.save-error {
+  color: #f08b8b;
+}

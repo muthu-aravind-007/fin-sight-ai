@@ -1,9 +1,23 @@
+
 import { useState } from 'react'
-import { Search, LoaderCircle, AlertCircle, Building2 } from 'lucide-react'
+import {
+  Search,
+  LoaderCircle,
+  AlertCircle,
+  Building2,
+  Save,
+  CheckCircle2,
+} from 'lucide-react'
+
 import { analyzeCompany } from '../services/CompanyAnalysis'
+import { saveResearchReport } from '../services/reports'
 import type { CompanyAnalysisResponse } from '../types/analysis'
 
-function formatCurrency(value: number | null, divisor: number, suffix: string) {
+function formatCurrency(
+  value: number | null,
+  divisor: number,
+  suffix: string,
+) {
   if (value === null || !Number.isFinite(value)) return 'N/A'
 
   return `$${(value / divisor).toFixed(2)} ${suffix}`
@@ -12,7 +26,11 @@ function formatCurrency(value: number | null, divisor: number, suffix: string) {
 function CompanyAnalyst() {
   const [ticker, setTicker] = useState('NVDA')
   const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [saveError, setSaveError] = useState('')
+  const [saveMessage, setSaveMessage] = useState('')
+  const [savedReportId, setSavedReportId] = useState<string | null>(null)
   const [report, setReport] = useState<CompanyAnalysisResponse | null>(null)
 
   async function handleAnalyze(event: React.FormEvent<HTMLFormElement>) {
@@ -25,6 +43,9 @@ function CompanyAnalyst() {
 
     setLoading(true)
     setError('')
+    setSaveError('')
+    setSaveMessage('')
+    setSavedReportId(null)
     setReport(null)
 
     try {
@@ -38,6 +59,29 @@ function CompanyAnalyst() {
       )
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleSaveReport() {
+    if (!report || savedReportId) return
+
+    setSaving(true)
+    setSaveError('')
+    setSaveMessage('')
+
+    try {
+      const result = await saveResearchReport(ticker, report)
+
+      setSavedReportId(result.id)
+      setSaveMessage('Research report saved successfully.')
+    } catch (err) {
+      setSaveError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to save the research report.',
+      )
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -119,11 +163,55 @@ function CompanyAnalyst() {
             </div>
           </div>
 
+          <div className="report-save-actions">
+            <button
+              className="primary-button"
+              type="button"
+              onClick={handleSaveReport}
+              disabled={saving || savedReportId !== null}
+            >
+              {saving ? (
+                <>
+                  <LoaderCircle size={17} className="spin" />
+                  Saving...
+                </>
+              ) : savedReportId ? (
+                <>
+                  <CheckCircle2 size={17} />
+                  Saved
+                </>
+              ) : (
+                <>
+                  <Save size={17} />
+                  Save Report
+                </>
+              )}
+            </button>
+
+            {saveMessage && (
+              <p className="save-success">
+                <CheckCircle2 size={15} />
+                {saveMessage}
+              </p>
+            )}
+
+            {saveError && (
+              <p className="save-error">
+                <AlertCircle size={15} />
+                {saveError}
+              </p>
+            )}
+          </div>
+
           <div className="financial-snapshot">
             <div className="financial-card">
               <span>Market Capitalization</span>
               <strong>
-                {formatCurrency(report.company_data.market_cap, 1_000_000_000_000, 'T')}
+                {formatCurrency(
+                  report.company_data.market_cap,
+                  1_000_000_000_000,
+                  'T',
+                )}
               </strong>
             </div>
 
@@ -139,7 +227,11 @@ function CompanyAnalyst() {
             <div className="financial-card">
               <span>Revenue</span>
               <strong>
-                {formatCurrency(report.company_data.revenue, 1_000_000_000, 'B')}
+                {formatCurrency(
+                  report.company_data.revenue,
+                  1_000_000_000,
+                  'B',
+                )}
               </strong>
             </div>
           </div>
@@ -151,9 +243,7 @@ function CompanyAnalyst() {
                 <h2>Executive Research Report</h2>
               </div>
             </div>
-            <div className="report-text">
-              {report.analysis}
-            </div>
+            <div className="report-text">{report.analysis}</div>
           </section>
 
           <section className="report-section">
@@ -200,7 +290,7 @@ function CompanyAnalyst() {
           </section>
 
           <section className="report-section">
-            <h2>News & Sentiment</h2>
+            <h2>News &amp; Sentiment</h2>
             <div className="report-text">{report.news_sentiment}</div>
           </section>
 
