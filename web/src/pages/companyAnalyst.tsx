@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Search, LoaderCircle, AlertCircle, Building2 } from 'lucide-react'
-import { analyzeCompany } from '../services/companyAnalysis'
+import { analyzeCompany } from '../services/CompanyAnalysis'
 import type { CompanyAnalysisResponse } from '../types/analysis'
 
 function formatCurrency(value: number | null, divisor: number, suffix: string) {

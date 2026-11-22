@@ -1,18 +1,74 @@
-import { useState } from 'react'
-import { Bell, Plus, Search } from 'lucide-react'
-import Sidebar from './components/Sidebar'
-import './App.css'
 
-import CompanyAnalyst from './pages/companyAnalyst'
+import { useEffect, useState } from 'react'
+import { Bell, Search } from 'lucide-react'
+
+import Sidebar from './components/Sidebar'
+import Auth from './pages/Auth'
+import CompanyAnalyst from './pages/CompanyAnalyst'
+import ResearchReports from './pages/ResearchReports'
+import { supabase } from './services/supabase'
+
+import './App.css'
 
 function App() {
   const [activePage, setActivePage] = useState('Research Reports')
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [checkingSession, setCheckingSession] = useState(true)
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserEmail(session?.user.email ?? null)
+      setCheckingSession(false)
+    })
+
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        console.error('Session check failed:', error.message)
+      }
+
+      setUserEmail(data.session?.user.email ?? null)
+      setCheckingSession(false)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut()
+
+    if (error) {
+      console.error('Sign out failed:', error.message)
+    }
+  }
+
+  if (checkingSession) {
+    return (
+      <div className="auth-page">
+        <p className="page-description">Loading your workspace...</p>
+      </div>
+    )
+  }
+
+  if (!userEmail) {
+    return <Auth />
+  }
+
+  const initials = userEmail
+    .split('@')[0]
+    .slice(0, 2)
+    .toUpperCase()
 
   return (
     <div className="app-layout">
       <Sidebar
         activePage={activePage}
         onNavigate={setActivePage}
+        userEmail={userEmail}
+        onLogout={handleLogout}
       />
 
       <main className="main-content">
@@ -20,51 +76,31 @@ function App() {
           <div className="breadcrumb">
             <span>FinSight</span>
             <span className="breadcrumb-separator">/</span>
-            <strong>{activePage}</strong>
+            <strong>
+              {activePage === 'Research Reports' ? 'Research' : activePage}
+            </strong>
           </div>
 
           <div className="topbar-actions">
             <button className="icon-button" aria-label="Search">
               <Search size={18} />
             </button>
+
             <button className="icon-button" aria-label="Notifications">
               <Bell size={18} />
             </button>
-            <div className="topbar-avatar">MA</div>
+
+            <div className="topbar-avatar">{initials}</div>
           </div>
         </header>
 
         <section className="page-container">
-          {activePage === 'Company Analyst' ? (
+          {activePage === 'Research Reports' ? (
+            <ResearchReports
+              onNewResearch={() => setActivePage('Company Analyst')}
+            />
+          ) : activePage === 'Company Analyst' ? (
             <CompanyAnalyst />
-          ) : activePage === 'Research Reports' ? (
-            <>
-              <div className="page-heading">
-                <div>
-                  <p className="eyebrow">FINANCIAL INTELLIGENCE</p>
-                  <h1>Research Reports</h1>
-                  <p className="page-description">
-                    AI-powered financial research and company insights.
-                  </p>
-                </div>
-
-                <button
-                  className="primary-button"
-                  onClick={() => setActivePage('Company Analyst')}
-                >
-                  <Plus size={17} />
-                  Generate New Research
-                </button>
-              </div>
-
-              <div className="empty-state">
-                <div className="empty-state-icon">
-                  <Search size={24} />
-                </div>
-                <h2>Your research starts here</h2>
-                <p>Generate your first AI-powered company research report.</p>
-              </div>
-            </>
           ) : (
             <div className="page-heading">
               <div>

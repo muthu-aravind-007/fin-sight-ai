@@ -1,58 +1,47 @@
 
 import {
-  Activity,
-  BarChart3,
-  BookOpen,
   BriefcaseBusiness,
   ChevronDown,
-  Clock3,
-  FileText,
-  LayoutDashboard,
+  House,
+  LogOut,
   Search,
   Settings2,
-  Sparkles,
 } from 'lucide-react'
 
 type SidebarProps = {
   activePage: string
   onNavigate: (page: string) => void
+  userEmail: string
+  onLogout: () => void
 }
 
-const Sidebar = ({ activePage, onNavigate }: SidebarProps) => {
-  const researchItems = [
-    { label: 'Research Reports', icon: FileText },
-    { label: 'Market Overview', icon: LayoutDashboard },
+const Sidebar = ({
+  activePage,
+  onNavigate,
+  userEmail,
+  onLogout,
+}: SidebarProps) => {
+  const navigationItems = [
+    { label: 'Home', page: 'Home', icon: House },
+    { label: 'Research', page: 'Research Reports', icon: Search },
+    { label: 'Portfolio', page: 'Portfolio', icon: BriefcaseBusiness },
   ]
 
-  const agentItems = [
-    { label: 'Company Analyst', icon: Search },
-    { label: 'Comparison Agent', icon: BarChart3 },
-    { label: 'Earnings Analyst', icon: Activity },
-    { label: 'Portfolio Agent', icon: BriefcaseBusiness },
-    { label: 'Earnings Q&A', icon: Sparkles },
-    { label: 'Multi-Document RAG', icon: BookOpen },
-  ]
+  const initials = userEmail
+    .split('@')[0]
+    .slice(0, 2)
+    .toUpperCase()
 
-  const workspaceItems = [
-    { label: 'Saved Reports', icon: FileText },
-    { label: 'Research History', icon: Clock3 },
-  ]
+  const isActive = (page: string) => {
+    if (page === 'Research Reports') {
+      return (
+        activePage === 'Research Reports' ||
+        activePage === 'Company Analyst'
+      )
+    }
 
-  const renderItems = (
-    items: { label: string; icon: typeof FileText }[],
-  ) =>
-    items.map(({ label, icon: Icon }) => (
-      <button
-        key={label}
-        onClick={() => onNavigate(label)}
-        className={`sidebar-link ${
-          activePage === label ? 'active' : ''
-        }`}
-      >
-        <Icon size={17} strokeWidth={1.8} />
-        <span>{label}</span>
-      </button>
-    ))
+    return activePage === page
+  }
 
   return (
     <aside className="sidebar">
@@ -65,27 +54,29 @@ const Sidebar = ({ activePage, onNavigate }: SidebarProps) => {
       </div>
 
       <button className="workspace-selector">
-        <div className="workspace-avatar">M</div>
+        <div className="workspace-avatar">{initials}</div>
+
         <div className="workspace-info">
           <strong>My Workspace</strong>
           <span>Personal workspace</span>
         </div>
+
         <ChevronDown size={15} />
       </button>
 
       <div className="sidebar-section">
-        <p className="sidebar-heading">RESEARCH</p>
-        {renderItems(researchItems)}
-      </div>
+        <p className="sidebar-heading">WORKSPACE</p>
 
-      <div className="sidebar-section">
-        <p className="sidebar-heading">AI WORKSPACE</p>
-        {renderItems(agentItems)}
-      </div>
-
-      <div className="sidebar-section">
-        <p className="sidebar-heading">PERSONAL</p>
-        {renderItems(workspaceItems)}
+        {navigationItems.map(({ label, page, icon: Icon }) => (
+          <button
+            key={page}
+            onClick={() => onNavigate(page)}
+            className={`sidebar-link ${isActive(page) ? 'active' : ''}`}
+          >
+            <Icon size={17} strokeWidth={1.8} />
+            <span>{label}</span>
+          </button>
+        ))}
       </div>
 
       <div className="sidebar-bottom">
@@ -100,11 +91,20 @@ const Sidebar = ({ activePage, onNavigate }: SidebarProps) => {
         </button>
 
         <div className="sidebar-user">
-          <div className="user-avatar">MA</div>
-          <div>
+          <div className="user-avatar">{initials}</div>
+          <div className="sidebar-user-info">
             <strong>My Account</strong>
-            <span>Personal plan</span>
+            <span title={userEmail}>{userEmail}</span>
           </div>
+
+          <button
+            className="icon-button sidebar-logout"
+            onClick={onLogout}
+            aria-label="Sign out"
+            title="Sign out"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
     </aside>

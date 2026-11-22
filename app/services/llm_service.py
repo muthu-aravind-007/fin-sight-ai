@@ -1,11 +1,20 @@
 import os
 import time
+
+from dotenv import load_dotenv
 from groq import Groq
+
+load_dotenv()
 
 MODEL_NAME = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+if not GROQ_API_KEY:
+    raise RuntimeError("GROQ_API_KEY is missing from the environment.")
+
 client = Groq(
-    api_key=os.getenv("GROQ_API_KEY")
+    api_key=GROQ_API_KEY
 )
 
 
@@ -39,7 +48,7 @@ def generate_analysis(
     output_tokens = response.usage.completion_tokens if response.usage else 0
 
     print("\n========== LLM PERFORMANCE ==========")
-    print(f"[LLM] Provider: Groq")
+    print("[LLM] Provider: Groq")
     print(f"[LLM] Model: {MODEL_NAME}")
     print(f"[LLM] Prompt characters: {len(prompt):,}")
     print(f"[LLM] Prompt tokens: {prompt_tokens}")
@@ -47,7 +56,10 @@ def generate_analysis(
     print(f"[LLM] Total wall time: {wall_time:.2f}s")
 
     if wall_time > 0:
-        print(f"[LLM] Overall speed: {(prompt_tokens + output_tokens) / wall_time:.2f} tokens/sec")
+        print(
+            f"[LLM] Overall speed: "
+            f"{(prompt_tokens + output_tokens) / wall_time:.2f} tokens/sec"
+        )
 
     print("=====================================\n")
 
