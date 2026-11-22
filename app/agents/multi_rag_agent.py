@@ -260,10 +260,21 @@ def analyze_multiple_transcripts(documents, question):
                     unique_candidates.append(doc)
 
             t = time.perf_counter()
+
+            
+            print(f"\n--- RERANK CANDIDATES: {company} ---")
+
+            for index, doc in enumerate(unique_candidates[:5], start=1):
+                print(
+                    f"\nCandidate {index} | "
+                    f"Page {doc.metadata.get('page')}"
+                )
+                print(doc.page_content[:700])
+
             company_results = rerank_documents(
                 expanded_question,
                 unique_candidates,
-                top_k=3,
+                top_k=2,
             )
             timings["reranking"] += time.perf_counter() - t
 
@@ -384,17 +395,33 @@ def analyze_multiple_transcripts(documents, question):
     print("Companies with Retrieved Evidence:", retrieved_companies)
     print("Companies without Retrieved Evidence:", missing_companies)
 
+    
     # ------------------------
-    # Build Context
+    # Build Company-Grouped Context
     # ------------------------
     sources = []
-    context_parts = []
+    company_contexts = {}
+
+    print("\n========== FINAL SELECTED CHUNKS ==========")
 
     for index, doc in enumerate(results, start=1):
-        company = doc.metadata.get("company", "Unknown")
+        print(
+            f"\n[S{index}] "
+            f"Company={doc.metadata.get('company')} | "
+            f"Quarter={doc.metadata.get('quarter')} | "
+            f"Page={doc.metadata.get('page')}"
+        )
+        print(doc.page_content[:1200])
+
+    print("\n============================================")
+
+    for index, doc in enumerate(results, start=1):
+        company = str(
+            doc.metadata.get("company", "Unknown")
+        ).strip().upper()
+
         quarter = doc.metadata.get("quarter", "Unknown")
         page = doc.metadata.get("page", "Unknown")
-
         source_id = f"S{index}"
 
         sources.append({
@@ -404,33 +431,42 @@ def analyze_multiple_transcripts(documents, question):
             "page": page,
         })
 
+        company_contexts.setdefault(company, []).append(
+            f"[{source_id}] "
+            f"Company: {company} | "
+            f"Quarter: {quarter} | "
+            f"Page: {page}\n"
+            f"{doc.page_content.strip()}"
+        )
+
+    context_parts = []
+
+    for company, passages in company_contexts.items():
         context_parts.append(
-            f"""
-        Source ID: {source_id}
-        Company: {company}
-        Quarter: {quarter}
-        Page: {page}
-
-        {doc.page_content}
-
-----------------------------------------
-"""
+            f"========== COMPANY: {company} ==========\n"
+            + "\n\n".join(passages)
+            + f"\n========== END COMPANY: {company} =========="
         )
 
     context = "\n\n".join(context_parts)
 
-    # Tell the model which companies were not represented in retrieval.
+    
+    # Tell the model if any selected company has no retrieved evidence.
     coverage_note = ""
+
     if missing_companies:
         coverage_note = (
             "\n\nRETRIEVAL COVERAGE WARNING:\n"
-            f"No chunks were retrieved for: {', '.join(missing_companies)}.\n"
-            "Do not invent facts for these companies. State that the "
-            "retrieved evidence is insufficient to assess them."
+            f"No chunks were retrieved for: "
+            f"{', '.join(missing_companies)}.\n"
+            "Do not invent facts for these companies. "
+            "State that the retrieved evidence is insufficient "
+            "to assess them."
         )
 
-    context = context + coverage_note
+    context += coverage_note
 
+    # Build the final prompt before calling the LLM.
     prompt = build_multi_rag_prompt(
         context,
         question,
@@ -440,6 +476,8 @@ def analyze_multiple_transcripts(documents, question):
 
     print("Chunks sent to LLM:", len(results))
     print("Context Length:", len(context), "characters")
+
+
 
     # ------------------------
     # Generate Answer

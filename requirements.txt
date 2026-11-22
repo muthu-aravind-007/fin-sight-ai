@@ -1,8 +1,12 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.0
+python-multipart
+mcp
 
 python-dotenv
-
 streamlit
 
 langchain
@@ -10,6 +14,7 @@ langchain-community
 langchain-huggingface
 langchain-text-splitters
 langchain-chroma
+langchain-groq
 langgraph
 
 chromadb
@@ -19,7 +24,6 @@ sentence-transformers
 transformers
 huggingface-hub
 
-pymupdf
 pypdf
 
 ollama
@@ -30,7 +34,3 @@ numpy
 
 requests
 feedparser
-
-python-multipart
-
-mcp

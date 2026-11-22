@@ -563,137 +563,161 @@ with tab6:
         accept_multiple_files=True
     )
 
-    documents = []
-
     if uploaded_files:
 
-        st.subheader(
-            "Transcript Metadata"
-        )
+        with st.form("multi_rag_form"):
 
-        for idx, file in enumerate(
-            uploaded_files
-        ):
-
-            st.markdown(
-                f"### {file.name}"
+            st.subheader(
+                "Transcript Metadata"
             )
 
-            col1, col2 = st.columns(2)
+            documents = []
 
-            company = col1.text_input(
-                "Company Ticker",
-                key=f"company_{idx}",
-                placeholder="MSFT"
-            )
+            for idx, file in enumerate(uploaded_files):
 
-            quarter = col2.text_input(
-                "Quarter",
-                key=f"quarter_{idx}",
-                placeholder="Q3 2026"
-            )
-
-            documents.append(
-                {
-                    "file": file,
-                    "company": company.upper(),
-                    "quarter": quarter.upper()
-                }
-            )
-
-    question = st.text_input(
-        "Ask a question",
-        placeholder="Compare AI strategy between NVIDIA and Microsoft"
-    )
-
-    if st.button(
-        "Analyze Multiple Transcripts",
-        key="multi_rag_button"
-    ):
-
-        if not uploaded_files:
-
-            st.error(
-                "Upload at least one PDF."
-            )
-
-        elif not question:
-
-            st.error(
-                "Enter a question."
-            )
-
-        elif any(
-            not doc["company"]
-            or not doc["quarter"]
-            for doc in documents
-        ):
-
-            st.error(
-                "Please provide Company and Quarter for all transcripts."
-            )
-
-        else:
-
-            with st.spinner(
-                "Analyzing transcripts..."
-            ):
-
-                os.makedirs(
-                    "data/uploads",
-                    exist_ok=True
+                st.markdown(
+                    f"### {file.name}"
                 )
 
-                documents_payload = []
+                col1, col2 = st.columns(2)
 
-                for doc in documents:
+                company = col1.text_input(
+                    "Company Ticker",
+                    key=f"company_{idx}",
+                    placeholder="MSFT"
+                )
 
-                    pdf_path = (
-                        f"data/uploads/{doc['file'].name}"
-                    )
+                quarter = col2.text_input(
+                    "Quarter",
+                    key=f"quarter_{idx}",
+                    placeholder="Q3 2026"
+                )
 
-                    with open(
-                        pdf_path,
-                        "wb"
-                    ) as f:
-
-                        f.write(
-                            doc["file"].getbuffer()
-                        )
-
-                    documents_payload.append(
-                        {
-                            "pdf_path": pdf_path,
-                            "company": doc["company"],
-                            "quarter": doc["quarter"]
-                        }
-                    )
-
-                response = requests.post(
-                    "http://127.0.0.1:8000/multi-rag",
-                    json={
-                        "documents": documents_payload,
-                        "question": question
+                documents.append(
+                    {
+                        "file": file,
+                        "company": company,
+                        "quarter": quarter
                     }
                 )
 
-                result = response.json()
+            question = st.text_input(
+                "Ask a question",
+                placeholder="Compare AI strategy between NVIDIA and Microsoft"
+            )
 
-                st.markdown(
-                    result["answer"]
+            submitted = st.form_submit_button(
+                "Analyze Multiple Transcripts",
+                use_container_width=True
+            )
+
+        if submitted:
+
+            if not question.strip():
+
+                st.error(
+                    "Enter a question."
                 )
 
-                with st.expander(
-                    "📚 Retrieved Sources"
+            elif any(
+                not doc["company"].strip()
+                or not doc["quarter"].strip()
+                for doc in documents
+            ):
+
+                st.error(
+                    "Please provide Company and Quarter for all transcripts."
+                )
+
+            else:
+
+                with st.spinner(
+                    "Analyzing transcripts..."
                 ):
 
-                    sources_df = pd.DataFrame(result["sources"])
+                    os.makedirs(
+                        "data/uploads",
+                        exist_ok=True
+                    )
 
-                    if not sources_df.empty:
-                        st.dataframe(
-                            sources_df,
-                            use_container_width=True,
-                            hide_index=True
+                    documents_payload = []
+
+                    for doc in documents:
+
+                        pdf_path = (
+                            f"data/uploads/{doc['file'].name}"
                         )
-                    else:
-                        st.info("No source documents were returned.")
+
+                        with open(
+                            pdf_path,
+                            "wb"
+                        ) as f:
+
+                            f.write(
+                                doc["file"].getbuffer()
+                            )
+
+                        documents_payload.append(
+                            {
+                                "pdf_path": pdf_path,
+                                "company": doc["company"].strip().upper(),
+                                "quarter": doc["quarter"].strip().upper()
+                            }
+                        )
+
+                    try:
+
+                        response = requests.post(
+                            "http://127.0.0.1:8000/multi-rag",
+                            json={
+                                "documents": documents_payload,
+                                "question": question.strip()
+                            },
+                            timeout=300
+                        )
+
+                        response.raise_for_status()
+
+                        result = response.json()
+
+                        st.subheader(
+                            "🤖 Analysis"
+                        )
+
+                        st.markdown(
+                            result["answer"]
+                        )
+
+                        with st.expander(
+                            "📚 Retrieved Sources"
+                        ):
+
+                            sources_df = pd.DataFrame(
+                                result.get("sources", [])
+                            )
+
+                            if not sources_df.empty:
+
+                                st.dataframe(
+                                    sources_df,
+                                    use_container_width=True,
+                                    hide_index=True
+                                )
+
+                            else:
+
+                                st.info(
+                                    "No source documents were returned."
+                                )
+
+                    except requests.RequestException as e:
+
+                        st.error(
+                            f"API request failed: {e}"
+                        )
+
+                    except (ValueError, KeyError) as e:
+
+                        st.error(
+                            f"Invalid API response: {e}"
+                        )

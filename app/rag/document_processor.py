@@ -1,13 +1,13 @@
-
 import hashlib
 import os
 import pickle
 
+from app.rag.text_cleaner import clean_documents
 from app.rag.pdf_loader import load_pdf
 from app.rag.chunker import chunk_documents
 
 
-CACHE_VERSION = "v1"
+CACHE_VERSION = "v5"
 CACHE_DIRECTORY = os.path.join(
     "cache",
     "processed_chunks",
@@ -86,31 +86,61 @@ def process_document(pdf_path, company, quarter):
     )
 
     docs = load_pdf(pdf_path)
-    chunks = chunk_documents(docs)
+
+    # Clean extracted page text before chunking.
+    cleaned_docs = clean_documents(docs)
+
+    # Diagnostic: check whether website noise survives cleaning.
+    noise_terms = [
+        "your comprehensive platform for stock analysis",
+        "top gainers today",
+        "privacy policy",
+    ]
+
+    for doc in cleaned_docs:
+        text = (doc.page_content or "").lower()
+
+        matched_terms = [
+            term for term in noise_terms
+            if term in text
+        ]
+
+        if matched_terms:
+            print(
+                f"[CLEANING FAILURE] "
+                f"Page={doc.metadata.get('page')} "
+                f"Terms={matched_terms}"
+            )
+            print(doc.page_content[-800:])
+
+    for doc in cleaned_docs:
+        text = doc.page_content or ""
+
+        print(
+            f"[PAGE CHECK] "
+            f"Source={os.path.basename(pdf_path)} | "
+            f"Page={doc.metadata.get('page')} | "
+            f"Characters={len(text)} | "
+            f"Ending={text[-250:]!r}"
+        )
+
+    print(
+        f"Pages extracted: {len(docs)} | "
+        f"Pages retained after cleaning: {len(cleaned_docs)}"
+    )
+
+    chunks = chunk_documents(cleaned_docs)
 
     cleaned_chunks = []
 
     for chunk in chunks:
-        text = chunk.page_content.lower()
+        text = chunk.page_content.strip()
 
-        footer_hits = sum([
-            "factset callstreet" in text,
-            "copyright" in text,
-            "1-877-factset" in text,
-        ])
-
-        if footer_hits >= 3:
+        if not text:
             continue
 
-        if len(text.strip()) < 150:
-            continue
-
-        chunk.metadata["company"] = (
-            company.strip().upper()
-        )
-        chunk.metadata["quarter"] = (
-            quarter.strip().upper()
-        )
+        chunk.metadata["company"] = company.strip().upper()
+        chunk.metadata["quarter"] = quarter.strip().upper()
         chunk.metadata["source"] = pdf_path
 
         cleaned_chunks.append(chunk)
