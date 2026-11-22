@@ -1,8 +1,12 @@
 import feedparser
 
+
 def get_company_news(company_name: str):
 
-    query = company_name.replace(" ", "+")
+    if not company_name or not company_name.strip():
+        return []
+
+    query = company_name.strip().replace(" ", "+")
 
     url = (
         f"https://news.google.com/rss/search?q={query}"
