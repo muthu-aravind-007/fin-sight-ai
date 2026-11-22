@@ -250,24 +250,31 @@ function CompanyAnalyst() {
             <p className="eyebrow">SPECIALIST AGENT OUTPUTS</p>
             <h2>Financial Indicators</h2>
 
+            
             <div className="metrics-grid">
               <div className="metric-card">
                 <span>Analysis Score</span>
-                <strong>{report.metrics.score}/6</strong>
+                <strong>
+                  {report.metrics.score ?? 'Not Scored'}
+                </strong>
               </div>
+
               <div className="metric-card">
                 <span>Valuation</span>
                 <strong>{report.metrics.valuation}</strong>
               </div>
+
               <div className="metric-card">
                 <span>Revenue Scale</span>
-                <strong>{report.metrics.growth}</strong>
+                <strong>{report.metrics.revenue_scale}</strong>
               </div>
+
               <div className="metric-card">
                 <span>Metric Risk Indicator</span>
                 <strong>{report.metrics.risk}</strong>
               </div>
             </div>
+
 
             {report.metrics.insights.length > 0 && (
               <ul className="insights-list">

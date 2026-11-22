@@ -79,12 +79,13 @@ def risk_node(state):
     }
 
 
-def final_analysis_node(state: FinancialState):
-    company_data = state["company_data"]
-    metrics = state["metrics"]
 
-    # Keep specialist findings concise while preserving
-    # their recommendations, scores, and key evidence.
+def final_analysis_node(state: FinancialState):
+
+    company_data = state["company_data"] or {}
+    metrics = state["metrics"] or {}
+
+    # Keep specialist findings concise.
     risk = " ".join(
         str(state["risk_analysis"]).split()
     )[:1200]
@@ -102,20 +103,22 @@ def final_analysis_node(state: FinancialState):
         for item in news_items[:5]:
             if isinstance(item, dict):
                 title = item.get("title", "")
-                if title:
-                    headlines.append(str(title))
-            else:
-                headlines.append(str(item))
+
+                if isinstance(title, str) and title.strip():
+                    headlines.append(title.strip())
+
+            elif isinstance(item, str) and item.strip():
+                headlines.append(item.strip())
 
         news = "\n".join(headlines)
+
     else:
-        news = str(news_items)
+        news = str(news_items or "")
 
     news = " ".join(news.split())[:800]
 
-
     # --------------------------------------------------
-    # Deterministic fallback for insufficient evidence
+    # Validate essential financial information
     # --------------------------------------------------
 
     required_fields = [
@@ -127,59 +130,134 @@ def final_analysis_node(state: FinancialState):
     has_complete_financial_data = True
 
     for field in required_fields:
+
         value = company_data.get(field)
 
         try:
             if value is None or not math.isfinite(float(value)):
                 has_complete_financial_data = False
                 break
+
         except (TypeError, ValueError):
             has_complete_financial_data = False
             break
 
-    has_news_evidence = bool(news.strip())
+    # --------------------------------------------------
+    # Deterministic fallback for incomplete financial data
+    # --------------------------------------------------
 
     if not has_complete_financial_data:
+
         company_name = (
             company_data.get("name")
             or state["ticker"]
         )
+
+        def display_value(value, is_currency=True):
+
+            if value is None:
+                return "N/A"
+
+            try:
+                numeric_value = float(value)
+
+                if not math.isfinite(numeric_value):
+                    return "N/A"
+
+                if is_currency:
+                    return f"${numeric_value:,.0f}"
+
+                return f"{numeric_value:.2f}"
+
+            except (TypeError, ValueError):
+                return "N/A"
+
+        market_cap = display_value(
+            company_data.get("market_cap")
+        )
+
+        revenue = display_value(
+            company_data.get("revenue")
+        )
+
+        pe_ratio = display_value(
+            company_data.get("pe_ratio"),
+            is_currency=False
+        )
+
+        if news.strip():
+            news_status = (
+                "News headlines were retrieved. However, "
+                "headline text is not independently verified "
+                "and does not establish reported events as facts."
+            )
+
+            news_details = (
+                f"\n\nAvailable headline text:\n{news}"
+            )
+
+        else:
+            news_status = (
+                "No usable news headlines were available."
+            )
+
+            news_details = ""
 
         analysis = f"""
 # 1. Company Overview
 
 **{company_name}**
 
-Company identification is available, but sufficient financial
-and news information is unavailable to produce a reliable
-company research assessment.
+Company identification is available, but one or more
+essential financial metrics are missing or invalid.
+
+Market Capitalization: {market_cap}
+Revenue: {revenue}
+P/E Ratio: {pe_ratio}
+
+A complete financial research assessment cannot be
+generated from the currently available financial data.
 
 # 2. Financial Health Assessment
 
-- Market Capitalization: N/A
-- P/E Ratio: N/A
-- Revenue: N/A
-- Valuation: Unknown
-- Revenue Scale: Unknown
-- Risk: Unknown
+- Market Capitalization: {market_cap}
+- P/E Ratio: {pe_ratio}
+- Revenue: {revenue}
+- Valuation: {metrics.get("valuation", "Unknown")}
+- Growth: {metrics.get("growth", "Unknown")}
+- Revenue Scale: {metrics.get("revenue_scale", "Unknown")}
+- Risk: {metrics.get("risk", "Not Assessed")}
 
-Financial health cannot be reliably assessed without the
-necessary financial information.
+The available financial information is incomplete.
+Missing values prevent a reliable assessment of overall
+financial health.
+
+Revenue scale does not establish revenue growth or
+profitability. A P/E ratio alone does not establish
+whether a stock is undervalued or overvalued.
 
 # 3. Positive Signals
 
-No sufficiently supported positive financial or news signals
-are available for evaluation.
+No complete set of financial indicators is available
+to establish a reliable positive financial assessment.
 
-This does not mean that the company has no positive attributes.
+This does not mean the company has no positive attributes.
 
 # 4. Key Risks
 
-Company-specific risks cannot be reliably established from
-the available information.
+Company-specific financial risks cannot be comprehensively
+assessed with the available information.
 
-Valuation, business, competition, market, and regulatory risks
-remain unassessed.
+Valuation, business, competition, market, and regulatory
+risks should not be assigned unsupported conclusions.
+
+**News Evidence**
+
+{news_status}{news_details}
+
+News headlines may identify topics for further verification,
+but they should not be treated as confirmed events or
+independent proof of company-specific risks.
 
 # 5. Investment Outlook
 
@@ -187,28 +265,33 @@ remain unassessed.
 
 **Confidence Score: N/A**
 
-The available evidence is inadequate to support a meaningful
-investment recommendation. A BUY, HOLD, or SELL conclusion
-should not be inferred.
+The available financial evidence is inadequate to support
+a reliable investment recommendation.
 
-Additional verified financial information and relevant news
-evidence are required.
+A BUY, HOLD, or SELL conclusion should not be inferred
+from incomplete financial information.
+
+Additional reliable financial data is required before
+a meaningful investment assessment can be completed.
 
 # 6. Final Rating
 
 **Insufficient Data**
 
-A directional investment rating cannot be justified using
-the currently available evidence.
+A directional investment rating cannot be justified
+using the currently available financial evidence.
 
-The outlook can be reassessed when reliable financial figures
-and relevant supporting information become available.
+The assessment can be revisited when the missing
+financial information becomes available.
 """
 
         return {
             "analysis": analysis.strip()
         }
 
+    # --------------------------------------------------
+    # Generate final report when financial data is complete
+    # --------------------------------------------------
 
     prompt = build_company_prompt(
         company_data,
@@ -226,6 +309,7 @@ and relevant supporting information become available.
     return {
         "analysis": analysis
     }
+
 
 builder = StateGraph(
     FinancialState

@@ -1,27 +1,7 @@
 
-import math
-
-
-def get_valid_number(value):
-    if value is None:
-        return None
-
-    try:
-        number = float(value)
-
-        if not math.isfinite(number):
-            return None
-
-        return number
-
-    except (TypeError, ValueError):
-        return None
-
-
 def evaluate_metrics(company_data):
 
-    score = 0
-    insights = []
+    company_data = company_data or {}
 
     pe = get_valid_number(
         company_data.get("pe_ratio")
@@ -32,37 +12,23 @@ def evaluate_metrics(company_data):
     )
 
     # --------------------
-    # Valuation
+    # Valuation Indicator
     # --------------------
 
     if pe is not None and pe > 0:
+        valuation = f"P/E ratio: {pe:.2f}"
 
-        if pe < 15:
-            valuation = "Potentially Undervalued"
-            score += 3
-            insights.append(
-                "Low P/E ratio relative to the configured thresholds"
-            )
-
-        elif pe < 35:
-            valuation = "Fairly Valued"
-            score += 2
-            insights.append(
-                "P/E ratio falls within the configured middle range"
-            )
-
-        else:
-            valuation = "Premium Valuation"
-            score += 1
-            insights.append(
-                "High P/E ratio; valuation requires further examination"
-            )
-
+        valuation_insight = (
+            "P/E ratio is available. A valuation conclusion "
+            "requires comparison with historical, industry, "
+            "and earnings-growth data."
+        )
     else:
         valuation = "Unknown"
 
-        insights.append(
-            "Valuation cannot be assessed using the available P/E data"
+        valuation_insight = (
+            "Valuation cannot be assessed because valid P/E data "
+            "is unavailable."
         )
 
     # --------------------
@@ -72,58 +38,58 @@ def evaluate_metrics(company_data):
     if revenue is not None and revenue >= 0:
 
         if revenue > 100_000_000_000:
-            growth = "Large Revenue Scale"
-            score += 3
-
-            insights.append(
-                "Company has a large reported revenue base"
-            )
+            revenue_scale = "Large"
 
         elif revenue > 10_000_000_000:
-            growth = "Medium Revenue Scale"
-            score += 2
-
-            insights.append(
-                "Company has a medium reported revenue base"
-            )
+            revenue_scale = "Medium"
 
         else:
-            growth = "Smaller Revenue Scale"
-            score += 1
+            revenue_scale = "Small"
 
-            insights.append(
-                "Company has a smaller reported revenue base"
-            )
-
-    else:
-        growth = "Unknown"
-
-        insights.append(
-            "Revenue scale cannot be assessed using the available data"
+        revenue_insight = (
+            f"Reported revenue indicates a {revenue_scale.lower()} "
+            "revenue base. Revenue scale does not establish "
+            "revenue growth or profitability."
         )
 
-    # --------------------
-    # Valuation-Based Risk Indicator
-    # --------------------
-
-    if pe is not None and pe > 0:
-
-        if pe > 50:
-            risk = "High"
-
-        elif pe > 25:
-            risk = "Medium"
-
-        else:
-            risk = "Low"
-
     else:
-        risk = "Unknown"
+        revenue_scale = "Unknown"
+
+        revenue_insight = (
+            "Revenue scale cannot be assessed because valid "
+            "revenue data is unavailable."
+        )
 
     return {
-        "score": score,
+        "score": None,
         "valuation": valuation,
-        "growth": growth,
-        "risk": risk,
-        "insights": insights
+        "growth": "Unknown",
+        "revenue_scale": revenue_scale,
+        "risk": "Not Assessed",
+        "insights": [
+            valuation_insight,
+            revenue_insight,
+            "Revenue growth requires historical revenue data.",
+            "Comprehensive financial risk requires additional "
+            "financial and operational metrics."
+        ]
     }
+
+
+def get_valid_number(value):
+
+    if value is None:
+        return None
+
+    try:
+        import math
+
+        number = float(value)
+
+        if not math.isfinite(number):
+            return None
+
+        return number
+
+    except (TypeError, ValueError):
+        return None

@@ -8,13 +8,16 @@ export interface CompanyData {
   revenue: number | null
 }
 
+
 export interface FinancialMetrics {
-  score: number
+  score: number | null
   valuation: string
   growth: string
+  revenue_scale: string
   risk: string
   insights: string[]
 }
+
 
 export interface NewsArticle {
   title?: string

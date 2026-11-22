@@ -20,7 +20,6 @@ def analyze_news(company_name):
         f"{time.perf_counter() - start:.2f}s"
     )
 
-    # Do not generate sentiment without news evidence
     if not news:
         return {
             "news": [],
@@ -33,11 +32,32 @@ def analyze_news(company_name):
             )
         }
 
-    headlines = [
-        item["title"]
-        for item in news
-        if item.get("title")
-    ]
+    # Extract valid headlines and remove duplicates
+    headlines = []
+    seen_headlines = set()
+
+    for item in news:
+
+        if not isinstance(item, dict):
+            continue
+
+        title = item.get("title")
+
+        if not isinstance(title, str):
+            continue
+
+        title = " ".join(title.split())
+
+        if not title:
+            continue
+
+        normalized_title = title.casefold()
+
+        if normalized_title in seen_headlines:
+            continue
+
+        seen_headlines.add(normalized_title)
+        headlines.append(title)
 
     if not headlines:
         return {

@@ -4,10 +4,13 @@ def build_news_sentiment_prompt(
     headlines
 ):
 
-    headlines_text = "\n".join(headlines)
+    headlines_text = "\n".join(
+        f"- {headline}"
+        for headline in headlines
+    )
 
     return f"""
-You are a cautious, evidence-driven financial news analyst.
+You are a cautious financial news classification analyst.
 
 Company:
 {company_name}
@@ -15,49 +18,93 @@ Company:
 Available News Headlines:
 {headlines_text}
 
-IMPORTANT RULES:
+YOUR OBJECTIVE:
 
-1. Analyze only the headlines provided.
-2. Do not invent news events, investigations, lawsuits, financial
-   results, management changes, or market movements.
-3. A headline is not proof that an allegation or reported event
-   is factually established.
-4. Do not claim to have read or verified the full articles.
-5. Do not infer detailed financial consequences from headlines alone.
-6. Distinguish the headline's stated information from your
-   interpretation.
-7. If a headline is ambiguous or its relevance to the company
-   is unclear, identify that limitation.
-8. If there are no relevant headlines, report insufficient evidence.
-9. Do not assign a numerical sentiment score when the available
-   headlines are insufficient for a meaningful assessment.
-10. Avoid treating the number of positive or negative headlines
-    as a reliable measure of future stock performance.
+Classify the supplied headlines without inventing facts,
+overstating allegations, or predicting stock performance.
 
-GENERATE:
+STRICT EVIDENCE RULES:
+
+1. Analyze only the supplied headline text.
+
+2. Do not claim to have accessed, read, or verified the full articles.
+
+3. Do not present allegations, investigations, political associations,
+   or reported events as independently confirmed facts.
+
+4. Do not infer criminal activity, misconduct, guilt, regulatory
+   violations, or wrongdoing from suggestive wording.
+
+5. Do not invent financial losses, penalties, operational disruption,
+   customer reactions, or reputational damage.
+
+6. Do not infer that a headline about an individual or another
+   organization establishes wrongdoing by {company_name}.
+
+7. Do not assume that every headline mentioning the company
+   is directly relevant to its financial performance.
+
+8. Similar headlines may refer to the same underlying story.
+   Do not treat repeated coverage as independent confirmation.
+
+9. Distinguish explicit headline statements from possible
+   interpretations. Label interpretations as tentative.
+
+10. Do not predict future stock returns or price movements.
+
+11. Do not calculate a numerical sentiment score.
+    Always report N/A because headline counts and wording alone
+    do not provide a validated quantitative scoring method.
+
+12. If company relevance or headline meaning is unclear,
+    classify it as Ambiguous rather than forcing a positive
+    or negative interpretation.
+
+OUTPUT FORMAT:
 
 1. Positive News
-   Include only headlines with an identifiable positive implication.
+
+List headlines with an explicitly positive implication.
+If none qualify, state "No clearly positive headlines identified."
 
 2. Negative News
-   Include only headlines with an identifiable negative implication.
 
-3. Neutral News
-   Include informational or ambiguous headlines.
+List headlines with an explicitly negative implication.
+Describe only what the headline actually reports.
+Do not add unverified consequences.
+
+3. Neutral or Ambiguous News
+
+List informational, speculative, or unclear headlines.
+Explain relevant limitations briefly.
 
 4. Overall Sentiment
-   (Bullish / Neutral / Bearish / Insufficient Data)
+
+Choose one:
+- Bullish
+- Neutral
+- Bearish
+- Insufficient Data
+
+Use Insufficient Data if the headlines are too ambiguous,
+irrelevant, or limited to support an overall assessment.
 
 5. Sentiment Score
-   (0-100 or N/A)
 
-6. Key Risks
-   Identify potential concerns suggested by the headlines.
-   Clearly label them as potential, not confirmed facts.
+N/A
+
+6. Potential Areas for Further Verification
+
+Identify topics that may warrant checking against the full article,
+company disclosures, or official records.
+
+Do not present these topics as established risks or facts.
 
 7. Conclusion
-   Summarize the available news evidence and its limitations.
 
-Respond only in English.
-Keep the analysis concise and professional.
+Summarize what the headlines indicate and what cannot
+be established from headline text alone.
+
+Keep the response concise, neutral, and evidence-based.
+Respond in English.
 """
