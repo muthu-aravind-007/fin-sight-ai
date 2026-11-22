@@ -1,12 +1,11 @@
-
 import os
 import time
-import ollama
+from groq import Groq
 
-MODEL_NAME = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
+MODEL_NAME = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 
-client = ollama.Client(
-    host=os.getenv("OLLAMA_HOST", "http://localhost:11434")
+client = Groq(
+    api_key=os.getenv("GROQ_API_KEY")
 )
 
 
@@ -20,7 +19,7 @@ def generate_analysis(
 
     start = time.perf_counter()
 
-    response = client.chat(
+    response = client.chat.completions.create(
         model=MODEL_NAME,
         messages=[
             {
@@ -28,41 +27,27 @@ def generate_analysis(
                 "content": prompt
             }
         ],
-        options={
-            "num_predict": num_predict,
-            "num_ctx": 4096,
-        },
+        max_tokens=num_predict,
+        temperature=0.2,
     )
 
     wall_time = time.perf_counter() - start
-    message = response["message"]["content"]
 
-    # Ollama reports durations in nanoseconds.
-    def seconds(field):
-        value = response.get(field, 0) or 0
-        return value / 1_000_000_000
+    message = response.choices[0].message.content or ""
 
-    prompt_tokens = response.get("prompt_eval_count", 0) or 0
-    output_tokens = response.get("eval_count", 0) or 0
-    prompt_time = seconds("prompt_eval_duration")
-    generation_time = seconds("eval_duration")
+    prompt_tokens = response.usage.prompt_tokens if response.usage else 0
+    output_tokens = response.usage.completion_tokens if response.usage else 0
 
     print("\n========== LLM PERFORMANCE ==========")
+    print(f"[LLM] Provider: Groq")
     print(f"[LLM] Model: {MODEL_NAME}")
     print(f"[LLM] Prompt characters: {len(prompt):,}")
     print(f"[LLM] Prompt tokens: {prompt_tokens}")
     print(f"[LLM] Output tokens: {output_tokens}")
-    print(f"[LLM] Load time: {seconds('load_duration'):.2f}s")
-    print(f"[LLM] Prompt evaluation: {prompt_time:.2f}s")
-    print(f"[LLM] Token generation: {generation_time:.2f}s")
     print(f"[LLM] Total wall time: {wall_time:.2f}s")
-    print(f"[LLM] Finish reason: {response.get('done_reason', 'unknown')}")
 
-    if prompt_time > 0:
-        print(f"[LLM] Prompt speed: {prompt_tokens / prompt_time:.2f} tokens/sec")
-
-    if generation_time > 0:
-        print(f"[LLM] Generation speed: {output_tokens / generation_time:.2f} tokens/sec")
+    if wall_time > 0:
+        print(f"[LLM] Overall speed: {(prompt_tokens + output_tokens) / wall_time:.2f} tokens/sec")
 
     print("=====================================\n")
 

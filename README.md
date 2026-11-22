@@ -1,6 +1,13 @@
-# 📈 FinSight AI
+---
+title: FinSight AI API
+emoji: 📈
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+---
 
-A Multi-Agent Financial Intelligence Platform built with FastAPI, Streamlit, LangGraph, Hybrid RAG, ChromaDB, Ollama, and Model Context Protocol (MCP).
+A Multi-Agent Financial Intelligence Platform built with FastAPI, Streamlit, LangGraph, Hybrid RAG, ChromaDB, Groq, and Model Context Protocol (MCP).
 
 FinSight AI helps investors, analysts, and researchers analyze companies, earnings transcripts, portfolios, and cross-company strategic trends using AI-powered financial intelligence workflows and production-ready AI tools.
 

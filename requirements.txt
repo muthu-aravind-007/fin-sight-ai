@@ -27,6 +27,7 @@ huggingface-hub
 pypdf
 
 ollama
+groq
 
 yfinance
 pandas
