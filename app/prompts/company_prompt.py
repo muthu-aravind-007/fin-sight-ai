@@ -63,13 +63,13 @@ def build_company_prompt(
     )
 
     return f"""
-You are a cautious, professional financial research analyst.
+You are a cautious, evidence-driven financial research analyst.
 
 Produce a balanced financial research report using only
 the information supplied below.
 
-Do not invent financial facts, company developments,
-market events, or supporting evidence.
+Your priority is factual accuracy, not producing a
+complete-looking or persuasive investment report.
 
 COMPANY INFORMATION
 
@@ -91,7 +91,7 @@ Risk Assessment: {metrics.get("risk", "Not Assessed")}
 Metric Insights:
 {metrics.get("insights", [])}
 
-A numerical overall metrics score is not available.
+A numerical overall metrics score is unavailable.
 Do not create or estimate one.
 
 RECENT NEWS HEADLINES
@@ -106,70 +106,97 @@ SPECIALIST INVESTMENT ANALYSIS
 
 {investment_analysis}
 
-CRITICAL EVIDENCE AND RELIABILITY RULES
+CRITICAL EVIDENCE RULES
 
-1. Treat N/A, Unknown, missing, and unavailable values
-   as unavailable information.
+1. Use only the supplied company information,
+   financial metrics, headlines, and specialist outputs.
 
-2. Never estimate missing financial figures.
+2. Never invent financial figures, historical performance,
+   company developments, market events, or supporting evidence.
 
-3. A P/E ratio alone does not establish whether a stock
+3. A reported market capitalization or revenue figure
+   establishes scale only. It does not establish market
+   leadership, market dominance, competitive advantage,
+   financial strength, or business quality.
+
+4. Never describe a company as dominant, leading,
+   best-in-class, financially strong, or highly competitive
+   unless explicit comparative evidence is supplied.
+
+5. A P/E ratio alone does not establish whether a stock
    is undervalued, overvalued, cheap, or expensive.
 
-4. Revenue scale does not establish revenue growth,
+6. Revenue scale does not establish revenue growth,
    profitability, financial strength, or cash generation.
 
-5. Revenue growth requires historical revenue comparisons.
+7. Revenue growth requires historical revenue comparisons.
    Do not claim growth without supporting historical data.
 
-6. Do not claim strong cash reserves, low debt, improving
-   margins, or healthy cash flow unless supporting figures
-   are explicitly supplied.
+8. Do not claim strong cash reserves, low debt, improving
+   margins, healthy cash flow, or strong earnings without
+   explicitly supplied supporting figures.
 
-7. News headlines are not independently verified evidence.
-   Do not present allegations, investigations, lawsuits,
-   leadership changes, or market events as confirmed facts
-   based solely on headlines.
+9. A news headline is a reported claim, not independently
+   verified evidence. Never describe a headline as proof
+   that an event occurred.
 
-8. Do not infer company misconduct or regulatory liability
-   from headlines about individuals or associated organizations.
+10. Do not convert a headline into a confirmed company
+    development, regulatory finding, criminal violation,
+    lawsuit outcome, customer loss, or financial consequence.
 
-9. Specialist risk and investment outputs are AI-generated
-   assessments, not independently verified facts.
+11. A headline quoting an executive or company representative
+    is a reported statement. It does not independently
+    establish customer retention, business performance,
+    or operational strength.
 
-10. Do not treat AI-generated sentiment as independent
-    confirmation of a reported news event.
+12. Headlines about individuals, political associations,
+    investors, or other organizations must not automatically
+    be attributed to the company.
 
-11. Distinguish:
-    - Supplied financial data
+13. Do not infer company misconduct, regulatory liability,
+    financial damage, or reputational damage from headline
+    wording alone.
+
+14. AI-generated news sentiment and specialist assessments
+    are interpretations of supplied inputs, not independent
+    verification or additional evidence.
+
+15. Never treat multiple AI-generated outputs derived from
+    the same headline as independent confirmation.
+
+16. Distinguish explicitly between:
+    - Supplied financial facts
     - Reported headline claims
+    - Unverified statements
     - AI-generated interpretations
     - General industry considerations
     - Unknown information
 
-12. Do not invent positive signals or company-specific risks
-    merely to fill a report section.
+17. Do not invent positive signals or company-specific risks
+    merely to populate a report section.
 
-13. If specialist investment analysis says
+18. If evidence is insufficient, say so directly.
+    Unknown is an acceptable and preferred conclusion
+    over unsupported certainty.
+
+19. If specialist investment analysis says
     INSUFFICIENT DATA, preserve that conclusion.
     Never replace it with BUY, HOLD, or SELL.
 
-14. Do not create numerical confidence scores or risk scores
-    when no validated supporting methodology is available.
+20. Do not create numerical confidence scores or risk scores
+    without a validated supporting methodology.
 
-15. Do not force a directional investment rating when
-    the available evidence is inadequate.
-
-YOUR TASK
-
-Synthesize the supplied information into one coherent report.
+REPORT STRUCTURE
 
 Use these exact sections:
 
 1. Company Overview
 
-Summarize the available company identification,
-sector, industry, and supplied financial figures.
+Summarize the supplied company identification,
+sector, industry, and financial figures.
+
+Describe market capitalization and revenue as
+reported scale indicators only.
 
 Identify missing company information.
 
@@ -182,33 +209,51 @@ of the supplied P/E information.
 
 Distinguish revenue scale from revenue growth.
 
+Do not claim overall financial strength or weakness
+without sufficient financial evidence.
+
 Clearly identify unavailable financial information.
 
 3. Positive Signals
 
-Identify positive signals directly supported
-by the supplied information.
+Include only explicitly supported positive information.
 
-If none are established, state that clearly.
+For every positive signal, identify its source.
+
+A positive headline must be labelled as an
+unverified reported statement or claim.
+
+Do not present company size alone as proof of
+competitive strength or business quality.
+
+If no reliable positive financial or operational
+signals are established, state that clearly.
 
 4. Key Risks
 
 Summarize the specialist risk assessment.
 
-Separate supported company-specific information
-from general industry considerations and unverified claims.
+Keep all Unknown risk classifications unchanged.
 
-If risks cannot be assessed, state that clearly.
+Separate reported headline claims from confirmed
+financial or operational risks.
+
+Do not elevate an unverified headline into an
+established company-specific risk.
+
+Identify areas that cannot currently be assessed.
 
 5. Investment Outlook
 
-Present the specialist investment assessment
-when supported by the available information.
+Present the specialist investment assessment.
 
 Explain its reasoning and limitations.
 
 Preserve INSUFFICIENT DATA whenever that is
 the specialist recommendation.
+
+Do not independently invent a directional
+investment recommendation.
 
 6. Final Rating
 
@@ -219,18 +264,24 @@ Choose one:
 - Bearish
 - Insufficient Data
 
-Use Insufficient Data when the evidence is inadequate
-to support a meaningful investment rating.
+Use Insufficient Data when the supplied evidence
+does not support a meaningful investment rating.
 
-REQUIREMENTS
+FINAL REQUIREMENTS
 
 - Complete all six sections.
 - Prefer concise paragraphs and bullet points.
 - Use only supplied evidence.
 - Do not invent missing financial metrics.
 - Distinguish financial facts from AI interpretations.
+- Do not repeat unsupported claims as established facts.
+- Do not convert company scale into market dominance.
+- Do not convert executive statements into verified
+  customer-retention evidence.
 - Explain meaningful disagreements between specialist outputs.
 - Do not override an INSUFFICIENT DATA recommendation.
 - State important uncertainties and evidence limitations.
-- End with a complete conclusion.
+- End with a complete, balanced conclusion.
+
+Respond in English.
 """
