@@ -13,6 +13,7 @@ interface ResearchReportsProps {
   onViewHistory: () => void
   onCompanyComparison: () => void
   onEarningsAnalysis: () => void
+  onDocumentResearch: () => void
 }
 
 const ResearchReports = ({
@@ -20,6 +21,7 @@ const ResearchReports = ({
   onViewHistory,
   onCompanyComparison,
   onEarningsAnalysis,
+  onDocumentResearch,
 }: ResearchReportsProps) => {
   const researchTasks = [
     {
@@ -54,8 +56,9 @@ const ResearchReports = ({
       description:
         'Explore financial documents and ask questions using their contents.',
       icon: FileText,
-      status: 'Coming soon',
-      active: false,
+      status: 'Available',
+      active: true,
+      action: onDocumentResearch,
     },
   ]
 

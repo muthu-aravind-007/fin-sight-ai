@@ -9,6 +9,7 @@ import ResearchReports from './pages/ResearchReports'
 import ResearchHistory from './pages/ResearchHistory'
 import ComparisonAgent from './pages/ComparisonAgent'
 import EarningsAnalysis from './pages/EarningsAnalysis'
+import DocumentResearch from './pages/DocumentResearch'
 import { supabase } from './services/supabase'
 
 import './App.css'
@@ -104,9 +105,12 @@ function App() {
               onViewHistory={() => setActivePage('Research History')}
               onCompanyComparison={() => setActivePage('Company Comparison')}
               onEarningsAnalysis={() => setActivePage('Earnings Analysis')}
+              onDocumentResearch={() => setActivePage('Document Research')}
             />
           ) : activePage === 'Earnings Analysis' ? (
             <EarningsAnalysis />
+            ) : activePage === 'Document Research' ? (
+            <DocumentResearch />
           ) : activePage === 'Company Analyst' ? (
             <CompanyAnalyst />
           ) : activePage === 'Company Comparison' ? (
