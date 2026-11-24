@@ -1,6 +1,8 @@
 import hashlib
 import os
 import pickle
+import shutil
+import sys
 
 from langchain_community.document_loaders import PyPDFLoader
 
@@ -50,14 +52,28 @@ def _extract_pdf(path):
         from pdf2image import convert_from_path
         from langchain_core.documents import Document
 
-        pytesseract.pytesseract.tesseract_cmd = (
-            r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-        )
+        if sys.platform == "win32":
+            pytesseract.pytesseract.tesseract_cmd = (
+                r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+            )
 
-        poppler_path = (
-            r"C:\Users\HP\Downloads\Release-26.09.0-0"
-            r"\poppler-26.09.0\Library\bin"
-        )
+            poppler_path = (
+                r"C:\Users\HP\Downloads\Release-26.09.0-0"
+                r"\poppler-26.09.0\Library\bin"
+            )
+
+        else:
+            tesseract_path = shutil.which("tesseract")
+            pdfinfo_path = shutil.which("pdfinfo")
+
+            if not tesseract_path or not pdfinfo_path:
+                raise RuntimeError(
+                    "Tesseract or Poppler is not installed "
+                    "or not available in PATH."
+                )
+
+            pytesseract.pytesseract.tesseract_cmd = tesseract_path
+            poppler_path = os.path.dirname(pdfinfo_path)
 
         images = convert_from_path(
             path,
