@@ -112,6 +112,51 @@ export async function saveComparisonReport(
   return Array.isArray(data) ? data[0] : data
 }
 
+export async function saveEarningsReport(
+  transcript: string,
+  analysis: string,
+): Promise<SaveReportResponse> {
+  if (!API_BASE_URL) {
+    throw new Error('API base URL is not configured.')
+  }
+
+  const headers = await getAuthenticatedHeaders()
+
+  const response = await fetch(
+    `${API_BASE_URL.replace(/\/$/, '')}/reports`,
+    {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        ticker: 'EARNINGS',
+        company_name: 'Earnings Analysis',
+        report_data: {
+          report_type: 'earnings',
+          transcript,
+          analysis,
+        },
+      }),
+    },
+  )
+
+  if (!response.ok) {
+    let message = `Unable to save earnings report (${response.status}).`
+
+    try {
+      const errorData = await response.json()
+      message = errorData.detail || message
+    } catch {
+      // Keep the default error message.
+    }
+
+    throw new Error(message)
+  }
+
+  const data = await response.json()
+
+  return Array.isArray(data) ? data[0] : data
+}
+
 
 export interface SavedResearchReport {
   id: string
@@ -119,6 +164,12 @@ export interface SavedResearchReport {
   company_name: string | null
   created_at: string
   updated_at?: string | null
+}
+
+export interface SavedEarningsReportData {
+  report_type: 'earnings'
+  transcript: string
+  analysis: string
 }
 
 export interface SavedComparisonReportData
@@ -130,7 +181,10 @@ export interface SavedComparisonReportData
 
 export interface SavedResearchReportDetail
   extends SavedResearchReport {
-  report_data: CompanyAnalysisResponse | SavedComparisonReportData
+  report_data:
+    | CompanyAnalysisResponse
+    | SavedComparisonReportData
+    | SavedEarningsReportData
 }
 
 async function getAuthenticatedHeaders() {

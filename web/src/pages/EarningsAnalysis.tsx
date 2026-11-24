@@ -8,8 +8,12 @@ import {
 } from 'lucide-react'
 
 import { analyzeEarnings } from '../services/EarningsAnalysis'
+import { saveEarningsReport } from '../services/reports'
 
 function EarningsAnalysis() {
+  const [saving, setSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
+  const [saveError, setSaveError] = useState('')
   const [transcript, setTranscript] = useState('')
   const [analysis, setAnalysis] = useState('')
   const [loading, setLoading] = useState(false)
@@ -40,6 +44,25 @@ function EarningsAnalysis() {
       setLoading(false)
     }
   }
+
+  async function handleSaveEarnings() {
+  setSaving(true)
+  setSaveMessage('')
+  setSaveError('')
+
+  try {
+    await saveEarningsReport(transcript, analysis)
+    setSaveMessage('Earnings report saved successfully.')
+  } catch (err) {
+    setSaveError(
+      err instanceof Error
+        ? err.message
+        : 'Unable to save earnings report.',
+    )
+  } finally {
+    setSaving(false)
+  }
+}
 
   function handleReset() {
     setTranscript('')
@@ -143,6 +166,35 @@ function EarningsAnalysis() {
           <h2>Generated Earnings Analysis</h2>
 
           <div className="report-text">{analysis}</div>
+
+          <div style={{ marginTop: '20px' }}>
+            <button
+              className="primary-button"
+              type="button"
+              onClick={handleSaveEarnings}
+              disabled={saving}
+            >
+              {saving ? (
+                <>
+                  <LoaderCircle size={17} className="spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Earnings Report'
+              )}
+            </button>
+
+            {saveMessage && (
+              <p className="analysis-status">{saveMessage}</p>
+            )}
+
+            {saveError && (
+              <div className="analysis-error">
+                <AlertCircle size={19} />
+                <span>{saveError}</span>
+              </div>
+            )}
+          </div>
         </section>
       )}
 
