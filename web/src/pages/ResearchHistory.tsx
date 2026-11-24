@@ -20,6 +20,8 @@ import type {
   SavedResearchReportDetail,
 } from '../services/reports'
 
+import type { CompanyAnalysisResponse } from '../types/analysis'
+
 interface ResearchHistoryProps {
   onBack: () => void
 }
@@ -102,8 +104,118 @@ function ResearchHistory({ onBack }: ResearchHistoryProps) {
     return new Date(date).toLocaleString()
   }
 
-  if (selectedReport) {
+  if (
+    selectedReport &&
+    'report_type' in selectedReport.report_data &&
+    selectedReport.report_data.report_type === 'comparison'
+  ) {
     const report = selectedReport.report_data
+
+    return (
+      <div className="analyst-page">
+        <button
+          className="secondary-button"
+          onClick={() => setSelectedReport(null)}
+        >
+          <ArrowLeft size={16} />
+          Back to history
+        </button>
+
+        <div className="page-heading">
+          <div>
+            <p className="eyebrow">SAVED COMPARISON</p>
+            <h1>{report.ticker1} vs {report.ticker2}</h1>
+            <p className="page-description">
+              Saved {formatDate(selectedReport.created_at)}
+            </p>
+          </div>
+        </div>
+
+        <div className="comparison-company-grid">
+          {[ 
+            { ticker: report.ticker1, company: report.company1, metrics: report.metrics1 },
+            { ticker: report.ticker2, company: report.company2, metrics: report.metrics2 },
+          ].map(({ ticker, company, metrics }) => (
+            <div className="comparison-company-card" key={ticker}>
+              <div className="company-identity">
+                <div className="company-icon">
+                  <FileText size={22} />
+                </div>
+                <div>
+                  <p className="eyebrow">{ticker}</p>
+                  <h2>{company.name || ticker}</h2>
+                  <p className="company-description">
+                    {[company.sector, company.industry]
+                      .filter(Boolean)
+                      .join(' · ') || 'Company information unavailable'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="comparison-financials">
+                <div className="comparison-financial-item">
+                  <span>Market Capitalization</span>
+                  <strong>
+                    {company.market_cap != null
+                      ? `$${(company.market_cap / 1_000_000_000_000).toFixed(2)} T`
+                      : 'N/A'}
+                  </strong>
+                </div>
+
+                <div className="comparison-financial-item">
+                  <span>P/E Ratio</span>
+                  <strong>{company.pe_ratio?.toFixed(2) ?? 'N/A'}</strong>
+                </div>
+
+                <div className="comparison-financial-item">
+                  <span>Revenue</span>
+                  <strong>
+                    {company.revenue != null
+                      ? `$${(company.revenue / 1_000_000_000).toFixed(2)} B`
+                      : 'N/A'}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="comparison-metrics">
+                <p className="eyebrow">FINANCIAL INDICATORS</p>
+
+                {[
+                  ['Analysis Score', metrics.score ?? 'Not Scored'],
+                  ['Valuation', metrics.valuation],
+                  ['Growth', metrics.growth],
+                  ['Revenue Scale', metrics.revenue_scale],
+                  ['Risk Indicator', metrics.risk],
+                ].map(([label, value]) => (
+                  <div className="comparison-metric-row" key={label}>
+                    <span>{label}</span>
+                    <strong>{value}</strong>
+                  </div>
+                ))}
+
+                {metrics.insights.length > 0 && (
+                  <ul className="insights-list">
+                    {metrics.insights.map((insight, index) => (
+                      <li key={index}>{insight}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <section className="report-section">
+          <p className="eyebrow">AI-GENERATED COMPARISON</p>
+          <h2>Comparative Analysis &amp; Recommendation</h2>
+          <div className="report-text">{report.analysis}</div>
+        </section>
+      </div>
+    )
+  }
+
+  if (selectedReport) {
+    const report = selectedReport.report_data as CompanyAnalysisResponse
     const company = report.company_data
 
     return (

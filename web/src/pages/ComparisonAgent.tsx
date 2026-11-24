@@ -11,6 +11,7 @@ import {
 
 import { compareCompanies } from '../services/ComparisonAnalysis'
 import type { CompanyComparisonResponse } from '../services/ComparisonAnalysis'
+import { saveComparisonReport } from '../services/reports'
 
 function formatCurrency(
   value: number | null,
@@ -118,6 +119,11 @@ function ComparisonAgent() {
   const [comparison, setComparison] =
     useState<CompanyComparisonResponse | null>(null)
 
+ const [saving, setSaving] = useState(false)
+ const [saveMessage, setSaveMessage] = useState('')
+ const [saveError, setSaveError] = useState('')
+ 
+
   async function handleCompare(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -155,6 +161,27 @@ function ComparisonAgent() {
       setLoading(false)
     }
   }
+
+  async function handleSaveComparison() {
+  if (!comparison) return
+
+  setSaving(true)
+  setSaveMessage('')
+  setSaveError('')
+
+  try {
+    await saveComparisonReport(ticker1, ticker2, comparison)
+    setSaveMessage('Comparison saved successfully.')
+  } catch (err) {
+    setSaveError(
+      err instanceof Error
+        ? err.message
+        : 'Unable to save comparison.',
+    )
+  } finally {
+    setSaving(false)
+  }
+}
 
   return (
     <div className="analyst-page">
@@ -243,12 +270,33 @@ function ComparisonAgent() {
         <div className="comparison-results">
           <div className="comparison-results-heading">
             <div>
-              <p className="eyebrow">FINANCIAL COMPARISON</p>
-              <h2>
+                <p className="eyebrow">FINANCIAL COMPARISON</p>
+                <h2>
                 {ticker1.toUpperCase()} vs {ticker2.toUpperCase()}
-              </h2>
+                </h2>
             </div>
-          </div>
+
+            <button
+                className="primary-button"
+                type="button"
+                onClick={handleSaveComparison}
+                disabled={saving}
+            >
+                {saving ? 'Saving...' : 'Save Comparison'}
+            </button>
+            </div>
+
+            {saveMessage && (
+            <div className="analysis-status">
+                <span>{saveMessage}</span>
+            </div>
+            )}
+
+            {saveError && (
+            <div className="analysis-error">
+                <span>{saveError}</span>
+            </div>
+            )}
 
           <div className="comparison-company-grid">
             <CompanySnapshot
