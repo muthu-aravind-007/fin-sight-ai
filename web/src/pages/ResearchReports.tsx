@@ -11,9 +11,15 @@ import {
 
 interface ResearchReportsProps {
   onNewResearch: () => void
+  onViewHistory: () => void
+  onCompanyComparison: () => void
 }
 
-const ResearchReports = ({ onNewResearch }: ResearchReportsProps) => {
+const ResearchReports = ({
+  onNewResearch,
+  onViewHistory,
+  onCompanyComparison,
+}: ResearchReportsProps) => {
   const researchTasks = [
     {
       title: 'Company Research',
@@ -29,8 +35,9 @@ const ResearchReports = ({ onNewResearch }: ResearchReportsProps) => {
       description:
         'Compare companies across financial performance, valuation and fundamentals.',
       icon: BarChart3,
-      status: 'Coming soon',
-      active: false,
+      status: 'Available',
+      active: true,
+      action: onCompanyComparison,
     },
     {
       title: 'Earnings Analysis',
@@ -128,7 +135,12 @@ const ResearchReports = ({ onNewResearch }: ResearchReportsProps) => {
             <p>Continue exploring your previous research.</p>
           </div>
 
-          <span className="recent-count">0 reports</span>
+                    <button
+                      className="recent-count"
+                      onClick={onViewHistory}
+                    >
+                      View all <ArrowRight size={14} />
+          </button>
         </div>
 
         <div className="recent-empty-state">

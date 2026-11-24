@@ -60,3 +60,95 @@ export async function saveResearchReport(
 
   return Array.isArray(data) ? data[0] : data
 }
+
+
+export interface SavedResearchReport {
+  id: string
+  ticker: string
+  company_name: string | null
+  created_at: string
+  updated_at?: string | null
+}
+
+export interface SavedResearchReportDetail
+  extends SavedResearchReport {
+  report_data: CompanyAnalysisResponse
+}
+
+async function getAuthenticatedHeaders() {
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession()
+
+  if (error || !session?.access_token) {
+    throw new Error('Your session has expired. Please sign in again.')
+  }
+
+  return {
+    Authorization: `Bearer ${session.access_token}`,
+    'Content-Type': 'application/json',
+  }
+}
+
+export async function getSavedReports(): Promise<SavedResearchReport[]> {
+  if (!API_BASE_URL) {
+    throw new Error('API base URL is not configured.')
+  }
+
+  const headers = await getAuthenticatedHeaders()
+
+  const response = await fetch(
+    `${API_BASE_URL.replace(/\/$/, '')}/reports`,
+    { headers },
+  )
+
+  if (!response.ok) {
+    throw new Error(`Unable to load reports (${response.status}).`)
+  }
+
+  return response.json()
+}
+
+export async function getSavedReport(
+  reportId: string,
+): Promise<SavedResearchReportDetail> {
+  if (!API_BASE_URL) {
+    throw new Error('API base URL is not configured.')
+  }
+
+  const headers = await getAuthenticatedHeaders()
+
+  const response = await fetch(
+    `${API_BASE_URL.replace(/\/$/, '')}/reports/${reportId}`,
+    { headers },
+  )
+
+  if (!response.ok) {
+    throw new Error(`Unable to load report (${response.status}).`)
+  }
+
+  return response.json()
+}
+
+export async function deleteSavedReport(
+  reportId: string,
+): Promise<void> {
+  if (!API_BASE_URL) {
+    throw new Error('API base URL is not configured.')
+  }
+
+  const headers = await getAuthenticatedHeaders()
+
+  const response = await fetch(
+    `${API_BASE_URL.replace(/\/$/, '')}/reports/${reportId}`,
+    {
+      method: 'DELETE',
+      headers,
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(`Unable to delete report (${response.status}).`)
+  }
+}
