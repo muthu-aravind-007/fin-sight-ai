@@ -104,6 +104,49 @@ function ResearchHistory({ onBack }: ResearchHistoryProps) {
     return new Date(date).toLocaleString()
   }
 
+
+    if (
+    selectedReport &&
+    'report_type' in selectedReport.report_data &&
+    selectedReport.report_data.report_type === 'earnings'
+  ) {
+    const report = selectedReport.report_data
+
+    return (
+      <div className="analyst-page">
+        <button
+          className="secondary-button"
+          onClick={() => setSelectedReport(null)}
+        >
+          <ArrowLeft size={16} />
+          Back to history
+        </button>
+
+        <div className="page-heading">
+          <div>
+            <p className="eyebrow">SAVED EARNINGS REPORT</p>
+            <h1>Earnings Analysis</h1>
+            <p className="page-description">
+              Saved {formatDate(selectedReport.created_at)}
+            </p>
+          </div>
+        </div>
+
+        <section className="report-section">
+          <p className="eyebrow">GENERATED ANALYSIS</p>
+          <h2>Earnings Report</h2>
+          <div className="report-text">{report.analysis}</div>
+        </section>
+
+        <section className="report-section">
+          <p className="eyebrow">SOURCE TRANSCRIPT</p>
+          <h2>Original Earnings-call Transcript</h2>
+          <div className="report-text">{report.transcript}</div>
+        </section>
+      </div>
+    )
+  }
+  
   if (
     selectedReport &&
     'report_type' in selectedReport.report_data &&
