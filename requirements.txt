@@ -24,6 +24,8 @@ sentence-transformers
 transformers
 huggingface-hub
 
+pytesseract
+pdf2image
 pypdf
 
 ollama
