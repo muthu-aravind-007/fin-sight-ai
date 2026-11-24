@@ -3,8 +3,10 @@ import os
 import pickle
 import shutil
 import sys
+import gc
 
 from langchain_community.document_loaders import PyPDFLoader
+from pdf2image import convert_from_path, pdfinfo_from_path
 
 
 EXTRACTION_CACHE_VERSION = "v1"
@@ -49,7 +51,6 @@ def _extract_pdf(path):
 
     try:
         import pytesseract
-        from pdf2image import convert_from_path
         from langchain_core.documents import Document
 
         if sys.platform == "win32":
@@ -75,15 +76,25 @@ def _extract_pdf(path):
             pytesseract.pytesseract.tesseract_cmd = tesseract_path
             poppler_path = os.path.dirname(pdfinfo_path)
 
-        images = convert_from_path(
+        total_pages = pdfinfo_from_path(
             path,
-            dpi=200,
             poppler_path=poppler_path,
-        )
+        )["Pages"]
 
         ocr_documents = []
 
-        for page_number, image in enumerate(images):
+        for page_number in range(total_pages):
+            images = convert_from_path(
+                path,
+                dpi=150,
+                first_page=page_number + 1,
+                last_page=page_number + 1,
+                poppler_path=poppler_path,
+                grayscale=True,
+            )
+
+            image = images[0]
+
             text = pytesseract.image_to_string(
                 image,
                 lang="eng",
@@ -99,6 +110,10 @@ def _extract_pdf(path):
                         },
                     )
                 )
+
+            image.close()
+            del image, images
+            gc.collect()
 
         if not ocr_documents:
             raise ValueError(
