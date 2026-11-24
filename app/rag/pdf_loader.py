@@ -1,3 +1,4 @@
+
 import hashlib
 import os
 import pickle
@@ -16,6 +17,45 @@ CACHE_DIRECTORY = os.path.join(
 )
 
 
+def _log_memory(stage):
+    """Log current and peak process memory on Linux."""
+    try:
+        memory_values = {}
+
+        with open("/proc/self/status", "r") as file:
+            for line in file:
+                if line.startswith(("VmRSS:", "VmHWM:")):
+                    key, value = line.split(":", 1)
+                    memory_values[key] = int(
+                        value.strip().split()[0]
+                    )
+
+        current_mb = memory_values.get("VmRSS")
+        peak_mb = memory_values.get("VmHWM")
+
+        if current_mb is not None:
+            print(
+                f"[MEMORY] {stage} | "
+                f"Current: {current_mb / 1024:.1f} MB | "
+                f"Peak: {peak_mb / 1024:.1f} MB"
+                if peak_mb is not None
+                else
+                f"[MEMORY] {stage} | "
+                f"Current: {current_mb / 1024:.1f} MB"
+            )
+        else:
+            print(
+                f"[MEMORY] {stage} | "
+                "Memory information unavailable."
+            )
+
+    except (OSError, ValueError) as exc:
+        print(
+            f"[MEMORY] {stage} | "
+            f"Could not read memory information: {exc}"
+        )
+
+
 def _file_hash(path):
     digest = hashlib.sha256()
 
@@ -30,9 +70,13 @@ def _file_hash(path):
 
 
 def _extract_pdf(path):
+    _log_memory("Before normal PDF extraction")
+
     # First, try normal text extraction.
     loader = PyPDFLoader(path)
     documents = loader.load()
+
+    _log_memory("After normal PDF extraction")
 
     extracted_text = "\n".join(
         doc.page_content.strip()
@@ -42,12 +86,17 @@ def _extract_pdf(path):
 
     # Return normally extracted text when available.
     if len(extracted_text) >= 100:
+        print(
+            f"Normal text extraction successful for {path}."
+        )
         return documents
 
     print(
         f"Little or no selectable text found in {path}. "
         "Trying OCR..."
     )
+
+    _log_memory("Before OCR initialization")
 
     try:
         import pytesseract
@@ -81,7 +130,11 @@ def _extract_pdf(path):
             poppler_path=poppler_path,
         )["Pages"]
 
+        print(f"Starting OCR for {total_pages} pages.")
+
         ocr_documents = []
+
+        _log_memory("Before OCR page processing")
 
         for page_number in range(total_pages):
             images = convert_from_path(
@@ -94,6 +147,10 @@ def _extract_pdf(path):
             )
 
             image = images[0]
+
+            _log_memory(
+                f"OCR page {page_number + 1}: image rendered"
+            )
 
             text = pytesseract.image_to_string(
                 image,
@@ -115,6 +172,10 @@ def _extract_pdf(path):
             del image, images
             gc.collect()
 
+            _log_memory(
+                f"OCR page {page_number + 1}: image released"
+            )
+
         if not ocr_documents:
             raise ValueError(
                 f"OCR did not extract text from {path}"
@@ -124,6 +185,8 @@ def _extract_pdf(path):
             f"OCR extracted text from "
             f"{len(ocr_documents)} pages."
         )
+
+        _log_memory("After OCR extraction")
 
         return ocr_documents
 
@@ -135,6 +198,8 @@ def _extract_pdf(path):
 
 
 def load_pdf(path):
+    _log_memory("Starting load_pdf")
+
     if not os.path.isfile(path):
         raise FileNotFoundError(
             f"PDF not found: {path}"
@@ -172,6 +237,9 @@ def load_pdf(path):
                     f"Loaded extracted PDF from cache: "
                     f"{os.path.basename(path)}"
                 )
+
+                _log_memory("After loading PDF extraction cache")
+
                 return documents
 
         except (
@@ -189,6 +257,8 @@ def load_pdf(path):
 
     documents = _extract_pdf(path)
 
+    _log_memory("Before saving PDF extraction cache")
+
     temporary_path = cache_path + ".tmp"
 
     with open(temporary_path, "wb") as file:
@@ -204,5 +274,7 @@ def load_pdf(path):
         f"Cached extracted PDF: "
         f"{os.path.basename(path)}"
     )
+
+    _log_memory("After saving PDF extraction cache")
 
     return documents
