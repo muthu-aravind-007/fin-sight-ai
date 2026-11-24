@@ -4,7 +4,6 @@ import {
   BarChart3,
   Building2,
   Clock3,
-  FileSearch,
   FileText,
   LockKeyhole,
 } from 'lucide-react'
@@ -13,12 +12,14 @@ interface ResearchReportsProps {
   onNewResearch: () => void
   onViewHistory: () => void
   onCompanyComparison: () => void
+  onEarningsAnalysis: () => void
 }
 
 const ResearchReports = ({
   onNewResearch,
   onViewHistory,
   onCompanyComparison,
+  onEarningsAnalysis,
 }: ResearchReportsProps) => {
   const researchTasks = [
     {
@@ -42,10 +43,11 @@ const ResearchReports = ({
     {
       title: 'Earnings Analysis',
       description:
-        'Understand earnings results, management commentary and financial guidance.',
-      icon: FileSearch,
-      status: 'Coming soon',
-      active: false,
+        'Analyze earnings-call transcripts to explore company performance, management commentary and financial outlook.',
+      icon: FileText,
+      status: 'Available',
+      active: true,
+      action: onEarningsAnalysis,
     },
     {
       title: 'Document Research',
